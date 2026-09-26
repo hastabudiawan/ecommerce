@@ -1,0 +1,11 @@
+package com.hasta.ecommerce.store.repository;
+
+import com.hasta.ecommerce.store.entity.Store;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+
+public interface StoreRepository extends JpaRepository<Store, Long> {
+    Optional<Store> findBySellerId(Long sellerId);
+    Optional<Store> findBySlug(String slug);
+    boolean existsBySellerId(Long sellerId);
+}
