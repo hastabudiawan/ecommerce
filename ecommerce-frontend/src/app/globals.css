@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ink: #000000;
+  --color-surface: #f0f0f0;
+  --color-card: #f0eeed;
+  --color-hero: #f2f0f1;
+  --color-star: #ffc633;
+  --color-sale: #ff3333;
+  --color-sale-bg: #ffebeb;
+  --color-success: #01ab31;
+
+  --font-sans: var(--font-body-loaded);
+  --font-display: var(--font-display-loaded);
+}
+
+body {
+  background: #ffffff;
+  color: #000000;
+}
