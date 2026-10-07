@@ -9,13 +9,19 @@ interface ProductSectionProps {
   viewAllHref?: string;
 }
 
-export function ProductSection({ title, products, viewAllHref }: ProductSectionProps) {
+export function ProductSection({
+  title,
+  products,
+  viewAllHref,
+}: ProductSectionProps) {
   if (products.length === 0) return null;
 
   return (
     <section className="py-12 md:py-16">
       <Container>
-        <h2 className="text-center font-display text-3xl md:text-4xl">{title}</h2>
+        <h2 className="text-center font-display text-3xl md:text-4xl">
+          {title}
+        </h2>
         <div className="mt-8 grid grid-cols-2 gap-4 md:mt-10 md:grid-cols-4 md:gap-6">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
@@ -25,7 +31,7 @@ export function ProductSection({ title, products, viewAllHref }: ProductSectionP
           <div className="mt-8 flex justify-center md:mt-10">
             <Link
               href={viewAllHref}
-              className="rounded-full border border-black/20 px-10 py-3.5 text-sm font-medium hover:bg-surface"
+              className="block w-full rounded-full border border-black/20 py-4 text-center text-sm font-medium hover:bg-black/5 md:inline-block md:w-auto md:px-16"
             >
               View All
             </Link>
