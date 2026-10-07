@@ -66,3 +66,25 @@ export interface Category {
   name: string;
   slug: string;
 }
+
+export interface CartItemDto {
+  id: number;
+  productId: number;
+  productName: string;
+  productSlug: string;
+  priceSnapshot: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface CartDto {
+  id: number | null;
+  items: CartItemDto[];
+  totalPrice: number;
+  totalItems: number;
+}
+
+export interface AddCartItemRequest {
+  productId: number;
+  quantity: number;
+}

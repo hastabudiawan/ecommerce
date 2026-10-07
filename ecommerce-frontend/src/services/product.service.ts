@@ -16,3 +16,8 @@ export async function getProducts(params: ProductQuery = {}) {
   });
   return res.data.data;
 }
+
+export async function getProductBySlug(slug: string) {
+  const res = await api.get<ApiResponse<Product>>(`/products/slug/${slug}`);
+  return res.data.data;
+}
