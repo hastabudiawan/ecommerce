@@ -29,10 +29,30 @@ export function Hero() {
             Shop Now
           </Link>
 
-          <dl className="mt-10 flex flex-wrap justify-center md:justify-start gap-6 md:gap-10">
+          {/* <dl className="mt-10 flex flex-wrap justify-center md:justify-start gap-6 md:gap-10">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center md:text-left">
                 <dt className="font-display text-2xl md:text-3xl">
+                  {stat.value}
+                </dt>
+                <dd className="text-sm text-black/60">{stat.label}</dd>
+              </div>
+            ))}
+          </dl> */}
+
+          <dl className="mt-10 flex flex-wrap justify-center xl:justify-start xl:flex-nowrap">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className={`text-center xl:text-left ${
+                  index === 0
+                    ? "w-1/2 xl:w-auto border-r border-black/10 pr-4 xl:pr-8"
+                    : index === 1
+                      ? "w-1/2 xl:w-auto xl:border-r xl:border-black/10 pl-4 xl:px-8"
+                      : "w-full xl:w-auto mt-6 xl:mt-0 xl:pl-8"
+                }`}
+              >
+                <dt className="font-display text-2xl xl:text-3xl">
                   {stat.value}
                 </dt>
                 <dd className="text-sm text-black/60">{stat.label}</dd>
