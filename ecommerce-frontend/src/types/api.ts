@@ -72,11 +72,13 @@ export interface CartItemDto {
   productId: number;
   productName: string;
   productSlug: string;
+  imageUrl: string | null;
+  storeId: number | null;
+  storeName: string | null;
   priceSnapshot: number;
   quantity: number;
   subtotal: number;
 }
-
 export interface CartDto {
   id: number | null;
   items: CartItemDto[];
