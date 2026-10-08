@@ -90,3 +90,71 @@ export interface AddCartItemRequest {
   productId: number;
   quantity: number;
 }
+
+export interface Address {
+  id: number;
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  isDefault: boolean;
+}
+
+export interface CreateAddressRequest {
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  isDefault: boolean;
+}
+
+export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+
+export interface OrderItem {
+  productId: number;
+  productName: string;
+  priceSnapshot: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface Order {
+  id: number;
+  orderNumber: string;
+  storeId: number | null;
+  storeName: string | null;
+  status: OrderStatus;
+  items: OrderItem[];
+  subtotal: number;
+  shippingCost: number;
+  total: number;
+  recipientName: string;
+  shippingAddress: string;
+  createdAt: string;
+}
+
+export interface OrderGroup {
+  id: number;
+  groupNumber: string;
+  subtotal: number;
+  shippingCost: number;
+  total: number;
+  recipientName: string;
+  shippingAddress: string;
+  orders: Order[];
+  createdAt: string;
+}
+
+export interface StoreShippingCost {
+  storeId: number | null; // null = produk platform
+  shippingCost: number;
+}
+
+export interface CheckoutRequest {
+  addressId: number;
+  shippingCosts: StoreShippingCost[];
+}
