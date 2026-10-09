@@ -23,4 +23,6 @@ public interface ProductService {
     ProductDto reject(Long productId, RejectProductRequest request);
     ProductImageDto addImage(Long userId, Long productId, MultipartFile file, boolean isPrimary);
     void removeImage(Long userId, Long productId, Long imageId);
+
+    ProductDto updateAsSeller(Long sellerId, Long productId, UpdateProductRequest request);
 }

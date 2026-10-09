@@ -99,7 +99,8 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Long sellerId = SecurityUtils.getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        // Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ProductDto> result = productService.getMyProducts(sellerId, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
@@ -132,5 +133,13 @@ public class ProductController {
         Long userId = SecurityUtils.getCurrentUserId();
         productService.removeImage(userId, id, imageId);
         return ResponseEntity.ok(ApiResponse.success("Gambar berhasil dihapus", null));
+    }
+
+    @PutMapping("/seller/{id}")
+    public ResponseEntity<ApiResponse<ProductDto>> updateAsSeller(
+            @PathVariable Long id, @Valid @RequestBody UpdateProductRequest request) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        ProductDto updated = productService.updateAsSeller(sellerId, id, request);
+        return ResponseEntity.ok(ApiResponse.success("Product berhasil diupdate", updated));
     }
 }

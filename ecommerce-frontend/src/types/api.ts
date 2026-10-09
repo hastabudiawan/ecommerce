@@ -158,3 +158,25 @@ export interface CheckoutRequest {
   addressId: number;
   shippingCosts: StoreShippingCost[];
 }
+
+export interface SellerStore {
+  id: number;
+  storeName: string;
+  slug: string;
+  description: string | null;
+  city: string | null;
+}
+
+export interface CreateStoreRequest {
+  storeName: string;
+  description?: string;
+  city?: string;
+}
+
+export interface ProductRequest {
+  categoryId: number;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+}

@@ -27,3 +27,10 @@ export function getPageNumbers(current: number, total: number): (number | "...")
 
   return range;
 }
+
+export function formatDate(value: string) {
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(new Date(value));
+}

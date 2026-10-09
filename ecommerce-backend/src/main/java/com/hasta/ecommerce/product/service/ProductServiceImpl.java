@@ -220,4 +220,36 @@ public class ProductServiceImpl implements ProductService {
             throw new BadRequestException("Anda bukan pemilik produk ini");
         }
     }
+
+    @Override
+    public ProductDto updateAsSeller(Long sellerId, Long productId, UpdateProductRequest request) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Product dengan id " + productId + " tidak ditemukan"));
+
+        // Lebih ketat dari checkOwnership(): produk platform (tanpa toko) bukan milik
+        // seller manapun
+        if (product.getStore() == null || !product.getStore().getSeller().getId().equals(sellerId)) {
+            throw new BadRequestException("Anda bukan pemilik produk ini");
+        }
+
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Category dengan id " + request.categoryId() + " tidak ditemukan"));
+
+        product.setCategory(category);
+        product.setName(request.name());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setStock(request.stock());
+
+        // Produk yang ditolak dianggap diajukan ulang begitu penjual memperbaikinya.
+        // Tanpa ini, produk REJECTED tidak punya jalan keluar.
+        if (product.getStatus() == ProductStatus.REJECTED) {
+            product.setStatus(ProductStatus.PENDING);
+            product.setRejectionReason(null);
+        }
+
+        return ProductMapper.toDto(product);
+    }
 }

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -42,7 +43,8 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Long userId = SecurityUtils.getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        // Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<OrderDto> orders = orderService.getMyOrders(userId, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(orders)));
     }
@@ -65,7 +67,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Long sellerId = SecurityUtils.getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<OrderDto> result = orderService.getSellerOrders(sellerId, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
