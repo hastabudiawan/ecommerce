@@ -86,3 +86,28 @@ export async function deleteProductImage({
 }) {
   await api.delete(`/products/${productId}/images/${imageId}`);
 }
+
+export async function getProductsForAdmin({
+  status,
+  page,
+  size,
+}: {
+  status?: Product["status"];
+  page: number;
+  size: number;
+}) {
+  const res = await api.get<ApiResponse<PageResponse<Product>>>("/products/admin", {
+    params: { status, page, size },
+  });
+  return res.data.data;
+}
+
+export async function approveProduct(id: number) {
+  const res = await api.put<ApiResponse<Product>>(`/products/${id}/approve`);
+  return res.data.data;
+}
+
+export async function rejectProduct({ id, reason }: { id: number; reason: string }) {
+  const res = await api.put<ApiResponse<Product>>(`/products/${id}/reject`, { reason });
+  return res.data.data;
+}

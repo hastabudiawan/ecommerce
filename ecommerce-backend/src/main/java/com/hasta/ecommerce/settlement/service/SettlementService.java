@@ -3,6 +3,8 @@ package com.hasta.ecommerce.settlement.service;
 import com.hasta.ecommerce.order.entity.Order;
 import com.hasta.ecommerce.settlement.dto.SettlementDto;
 import com.hasta.ecommerce.settlement.dto.SettlementSummaryDto;
+import com.hasta.ecommerce.settlement.entity.SettlementStatus;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,4 +13,5 @@ public interface SettlementService {
     Page<SettlementDto> getMySettlements(Long sellerId, Pageable pageable);
     SettlementSummaryDto getMySummary(Long sellerId);
     SettlementDto release(Long settlementId);
+    Page<SettlementDto> getAllForAdmin(SettlementStatus status, Pageable pageable);
 }

@@ -24,9 +24,9 @@ import com.hasta.ecommerce.product.dto.ProductDto;
 import com.hasta.ecommerce.product.dto.ProductImageDto;
 import com.hasta.ecommerce.product.dto.RejectProductRequest;
 import com.hasta.ecommerce.product.dto.UpdateProductRequest;
+import com.hasta.ecommerce.product.entity.ProductStatus;
 import com.hasta.ecommerce.product.service.ProductService;
 import com.hasta.ecommerce.security.SecurityUtils;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -141,5 +141,20 @@ public class ProductController {
         Long sellerId = SecurityUtils.getCurrentUserId();
         ProductDto updated = productService.updateAsSeller(sellerId, id, request);
         return ResponseEntity.ok(ApiResponse.success("Product berhasil diupdate", updated));
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<PageResponse<ProductDto>>> getForAdmin(
+            @RequestParam(required = false) ProductStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Antrian review: yang paling lama menunggu ditampilkan paling atas
+        Sort sort = status == ProductStatus.PENDING
+                ? Sort.by(Sort.Direction.ASC, "createdAt")
+                : Sort.by(Sort.Direction.DESC, "createdAt");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ProductDto> result = productService.getForAdmin(status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
 }

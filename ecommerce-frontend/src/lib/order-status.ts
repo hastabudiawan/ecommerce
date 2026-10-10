@@ -16,3 +16,13 @@ export const PROGRESS_STEPS: { status: OrderStatus; label: string }[] = [
   { status: "SHIPPED", label: "Dikirim" },
   { status: "COMPLETED", label: "Selesai" },
 ];
+
+// Langkah berikutnya yang ditawarkan ke seller untuk tiap status.
+// Status yang tidak ada di sini (COMPLETED, CANCELLED) sudah final dan tidak punya aksi.
+export const SELLER_NEXT_ACTION: Partial<
+  Record<OrderStatus, { next: OrderStatus; label: string }>
+> = {
+  PENDING: { next: "PAID", label: "Konfirmasi Pembayaran" },
+  PAID: { next: "SHIPPED", label: "Kirim Pesanan" },
+  SHIPPED: { next: "COMPLETED", label: "Tandai Selesai" },
+};

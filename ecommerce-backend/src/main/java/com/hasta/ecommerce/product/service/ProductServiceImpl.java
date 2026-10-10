@@ -252,4 +252,13 @@ public class ProductServiceImpl implements ProductService {
 
         return ProductMapper.toDto(product);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getForAdmin(ProductStatus status, Pageable pageable) {
+        Page<Product> products = status != null
+                ? productRepository.findByStatus(status, pageable)
+                : productRepository.findAll(pageable);
+        return products.map(ProductMapper::toDto);
+    }
 }

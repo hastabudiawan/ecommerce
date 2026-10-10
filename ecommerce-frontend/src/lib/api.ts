@@ -27,3 +27,19 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export type SettlementStatus = "PENDING" | "RELEASED";
+
+export interface Settlement {
+  id: number;
+  orderNumber: string;
+  amount: number;
+  status: SettlementStatus;
+  createdAt: string;
+  releasedAt: string | null;
+}
+
+export interface SettlementSummary {
+  totalPending: number;
+  totalReleased: number;
+}

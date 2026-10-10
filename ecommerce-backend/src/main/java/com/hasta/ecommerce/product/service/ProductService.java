@@ -5,10 +5,11 @@ import com.hasta.ecommerce.product.dto.ProductDto;
 import com.hasta.ecommerce.product.dto.ProductImageDto;
 import com.hasta.ecommerce.product.dto.RejectProductRequest;
 import com.hasta.ecommerce.product.dto.UpdateProductRequest;
+import com.hasta.ecommerce.product.entity.ProductStatus;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
-
 public interface ProductService {
     ProductDto create(CreateProductRequest request);
     ProductDto getById(Long id);
@@ -25,4 +26,6 @@ public interface ProductService {
     void removeImage(Long userId, Long productId, Long imageId);
 
     ProductDto updateAsSeller(Long sellerId, Long productId, UpdateProductRequest request);
+
+    Page<ProductDto> getForAdmin(ProductStatus status, Pageable pageable);
 }

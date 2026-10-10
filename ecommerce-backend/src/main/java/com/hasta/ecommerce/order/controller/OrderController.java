@@ -6,6 +6,7 @@ import com.hasta.ecommerce.order.dto.CheckoutRequest;
 import com.hasta.ecommerce.order.dto.OrderDto;
 import com.hasta.ecommerce.order.dto.OrderGroupDto;
 import com.hasta.ecommerce.order.dto.UpdateOrderStatusRequest;
+import com.hasta.ecommerce.order.entity.OrderStatus;
 import com.hasta.ecommerce.order.service.CheckoutService;
 import com.hasta.ecommerce.order.service.OrderService;
 import com.hasta.ecommerce.security.SecurityUtils;
@@ -78,5 +79,15 @@ public class OrderController {
         Long sellerId = SecurityUtils.getCurrentUserId();
         OrderDto updated = orderService.updateStatusAsSeller(sellerId, orderId, request);
         return ResponseEntity.ok(ApiResponse.success("Status order berhasil diupdate", updated));
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<PageResponse<OrderDto>>> getForAdmin(
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<OrderDto> result = orderService.getForAdmin(status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
 }

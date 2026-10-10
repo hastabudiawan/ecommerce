@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record SettlementDto(
         Long id,
         String orderNumber,
+        String storeName,
         BigDecimal amount,
         String status,
         LocalDateTime createdAt,

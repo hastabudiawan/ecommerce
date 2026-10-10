@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/seller/**").hasRole("SELLER")
                         .requestMatchers(HttpMethod.POST, "/api/products/seller").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN") // baru
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/approve").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/reject").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/*/images").hasAnyRole("ADMIN", "SELLER")
@@ -89,10 +90,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers("/api/addresses/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/seller").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/admin").hasRole("ADMIN") // baru
                         .requestMatchers(HttpMethod.PUT, "/api/orders/seller/*/status").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/seller/settlements/**").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/settlements").hasRole("ADMIN") // baru
                         .requestMatchers(HttpMethod.PUT, "/api/admin/settlements/*/release").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())

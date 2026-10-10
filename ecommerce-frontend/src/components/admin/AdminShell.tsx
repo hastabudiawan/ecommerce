@@ -2,35 +2,33 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ClipboardList, PackageCheck, Wallet } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Container } from "@/components/ui/Container";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/api";
-import { ClipboardList, Package, Store, Wallet } from "lucide-react";
 
-const SELLER_ONLY: UserRole[] = ["SELLER"];
+const ADMIN_ONLY: UserRole[] = ["ADMIN"];
 
-// Part 10 akan menambahkan menu Pesanan dan Settlement di sini
 const navItems = [
-  { href: "/seller", label: "Toko", icon: Store, exact: true },
-  { href: "/seller/products", label: "Produk", icon: Package, exact: false },
-  { href: "/seller/orders", label: "Pesanan", icon: ClipboardList, exact: false },
-  { href: "/seller/settlements", label: "Settlement", icon: Wallet, exact: false },
+  { href: "/admin", label: "Review Produk", icon: PackageCheck, exact: true },
+  { href: "/admin/orders", label: "Pesanan", icon: ClipboardList, exact: false },
+  { href: "/admin/settlements", label: "Settlement", icon: Wallet, exact: false },
 ];
 
-export function SellerShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <RequireAuth roles={SELLER_ONLY}>
+    <RequireAuth roles={ADMIN_ONLY}>
       <header className="border-b border-black/10">
         <Container className="flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
             <Link href="/" className="font-display text-2xl">
               SHOP.CO
             </Link>
-            <span className="rounded-full bg-surface px-3 py-1 text-xs">
-              Dashboard Seller
+            <span className="rounded-full bg-ink px-3 py-1 text-xs text-white">
+              Dashboard Admin
             </span>
           </div>
           <Link href="/" className="text-sm text-black/60 hover:text-black">

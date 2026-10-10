@@ -82,4 +82,13 @@ public class OrderServiceImpl implements OrderService {
 
         return OrderMapper.toDto(order);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderDto> getForAdmin(OrderStatus status, Pageable pageable) {
+        Page<Order> orders = status != null
+                ? orderRepository.findByStatus(status, pageable)
+                : orderRepository.findAll(pageable);
+        return orders.map(OrderMapper::toDto);
+    }
 }

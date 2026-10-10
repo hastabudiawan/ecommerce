@@ -180,3 +180,19 @@ export interface ProductRequest {
   price: number;
   stock: number;
 }
+
+export type SettlementStatus = "PENDING" | "RELEASED";
+
+export interface Settlement {
+  id: number;
+  orderNumber: string;
+  storeName: string;
+  amount: number;
+  status: SettlementStatus;
+  createdAt: string;
+  releasedAt: string | null;
+}
+export interface SettlementSummary {
+  totalPending: number;
+  totalReleased: number;
+}

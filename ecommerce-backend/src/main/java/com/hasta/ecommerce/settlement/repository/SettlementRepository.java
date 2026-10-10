@@ -18,4 +18,6 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
     @Query("SELECT COALESCE(SUM(s.amount), 0) FROM Settlement s WHERE s.store.id = :storeId AND s.status = :status")
     BigDecimal sumAmountByStoreIdAndStatus(@Param("storeId") Long storeId, @Param("status") SettlementStatus status);
+
+    Page<Settlement> findByStatus(SettlementStatus status, Pageable pageable);
 }
