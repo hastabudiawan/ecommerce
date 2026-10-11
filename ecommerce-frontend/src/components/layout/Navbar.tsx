@@ -113,6 +113,14 @@ export function Navbar() {
                 <span className="hidden text-sm md:inline">{user.name}</span>
               </button>
               <div className="invisible absolute right-0 top-full z-10 w-40 rounded-xl border border-black/10 bg-white p-2 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
+                {user.role === "CUSTOMER" && (
+                  <Link
+                    href="/open-store"
+                    className="block rounded-lg px-3 py-2 text-sm hover:bg-surface"
+                  >
+                    Buka Toko
+                  </Link>
+                )}
                 <Link
                   href="/orders"
                   className="block rounded-lg px-3 py-2 text-sm hover:bg-surface"

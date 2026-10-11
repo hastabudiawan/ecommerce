@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, PackageCheck, Wallet } from "lucide-react";
+import { ClipboardList, PackageCheck, Users, Wallet } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Container } from "@/components/ui/Container";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin", label: "Review Produk", icon: PackageCheck, exact: true },
   { href: "/admin/orders", label: "Pesanan", icon: ClipboardList, exact: false },
   { href: "/admin/settlements", label: "Settlement", icon: Wallet, exact: false },
+  { href: "/admin/users", label: "Pengguna", icon: Users, exact: false },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

@@ -11,6 +11,7 @@ import { loginSchema, type LoginFormValues } from "@/lib/validation/auth";
 import { login } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import type { UserRole } from "@/types/api";
+import { getErrorMessage } from "@/lib/errors";
 
 const roleRedirect: Record<UserRole, string> = {
   ADMIN: "/admin",
@@ -52,7 +53,7 @@ export default function LoginPage() {
         email: data.email,
         role: data.role,
       });
-      
+
       const next = getSafeNext(searchParams.get("next"));
       router.push(next ?? roleRedirect[data.role]);
     },
@@ -86,9 +87,7 @@ export default function LoginPage() {
         />
 
         {mutation.isError && (
-          <p className="text-sm text-sale">
-            Email atau password salah. Silakan coba lagi.
-          </p>
+          <p className="text-sm text-sale">{getErrorMessage(mutation.error)}</p>
         )}
 
         <Button type="submit" disabled={mutation.isPending} className="w-full">
