@@ -8,17 +8,26 @@ import { Field } from "@/components/ui/Field";
 import { TextArea } from "@/components/ui/TextArea";
 import { getErrorMessage } from "@/lib/errors";
 import { storeSchema, type StoreFormValues } from "@/lib/validation/seller";
-import { createStore } from "@/services/store.service";
-import type { SellerStore } from "@/types/api";
+import type { CreateStoreRequest } from "@/types/api";
 
-export function StoreForm({ onCreated }: { onCreated: (store: SellerStore) => void }) {
+interface StoreFormProps<T> {
+  mutationFn: (payload: CreateStoreRequest) => Promise<T>;
+  onSuccess: (result: T) => void;
+  submitLabel?: string;
+}
+
+export function StoreForm<T>({
+  mutationFn,
+  onSuccess,
+  submitLabel = "Buat Toko",
+}: StoreFormProps<T>) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<StoreFormValues>({ resolver: zodResolver(storeSchema) });
 
-  const mutation = useMutation({ mutationFn: createStore, onSuccess: onCreated });
+  const mutation = useMutation({ mutationFn, onSuccess });
 
   return (
     <form
@@ -48,7 +57,7 @@ export function StoreForm({ onCreated }: { onCreated: (store: SellerStore) => vo
       )}
 
       <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? "Membuat toko..." : "Buat Toko"}
+        {mutation.isPending ? "Memproses..." : submitLabel}
       </Button>
     </form>
   );

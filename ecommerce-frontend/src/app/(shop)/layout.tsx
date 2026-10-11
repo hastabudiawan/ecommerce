@@ -1,5 +1,7 @@
-import { Navbar } from "@/components/layout/Navbar";
+import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import { PageFallback } from "@/components/ui/PageFallback";
 
 export default function ShopLayout({
   children,
@@ -7,7 +9,9 @@ export default function ShopLayout({
   return (
     <>
       <Navbar />
-      <main>{children}</main>
+      <main>
+        <Suspense fallback={<PageFallback />}>{children}</Suspense>
+      </main>
       <Footer />
     </>
   );

@@ -1,6 +1,7 @@
 package com.hasta.ecommerce.config;
 
 import com.hasta.ecommerce.security.JwtAuthFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,9 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
+    @Value("${app.cors.allowed-origins}")
+    private String[] allowedOrigins;
+
     public SecurityConfig(JwtAuthFilter jwtAuthFilter, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
@@ -53,7 +57,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(List.of(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -71,10 +75,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/open-store").hasRole("CUSTOMER")   // baru
                         .requestMatchers(HttpMethod.GET, "/api/products/seller/**").hasRole("SELLER")
                         .requestMatchers(HttpMethod.POST, "/api/products/seller").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN") // baru
+                        .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN") 
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/approve").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/reject").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/*/images").hasAnyRole("ADMIN", "SELLER")
@@ -90,13 +95,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers("/api/addresses/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/seller").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/orders/admin").hasRole("ADMIN") // baru
+                        .requestMatchers(HttpMethod.GET, "/api/orders/admin").hasRole("ADMIN") 
                         .requestMatchers(HttpMethod.PUT, "/api/orders/seller/*/status").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/seller/settlements/**").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/settlements").hasRole("ADMIN") // baru
+                        .requestMatchers(HttpMethod.GET, "/api/admin/settlements").hasRole("ADMIN") 
                         .requestMatchers(HttpMethod.PUT, "/api/admin/settlements/*/release").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")                          // baru
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

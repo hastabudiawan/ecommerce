@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -18,8 +18,23 @@ const roleRedirect: Record<UserRole, string> = {
   CUSTOMER: "/",
 };
 
+// Hanya menerima path internal. URL absolut atau yang diawali "//" atau "/\"
+// bisa dipakai untuk mengarahkan user ke situs lain setelah login (open redirect).
+function getSafeNext(next: string | null) {
+  if (
+    next &&
+    next.startsWith("/") &&
+    !next.startsWith("//") &&
+    !next.startsWith("/\\")
+  ) {
+    return next;
+  }
+  return null;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const {
@@ -37,7 +52,9 @@ export default function LoginPage() {
         email: data.email,
         role: data.role,
       });
-      router.push(roleRedirect[data.role]);
+      
+      const next = getSafeNext(searchParams.get("next"));
+      router.push(next ?? roleRedirect[data.role]);
     },
   });
 

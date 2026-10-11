@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AuthUser } from "@/types/api";
+import { isTokenExpired } from "@/lib/jwt";
 
 interface AuthState {
   token: string | null;
@@ -38,6 +39,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       onRehydrateStorage: () => (state) => {
+        if (state?.token && isTokenExpired(state.token)) {
+          state.clearAuth();
+        }
         state?.setHasHydrated(true);
       },
     },

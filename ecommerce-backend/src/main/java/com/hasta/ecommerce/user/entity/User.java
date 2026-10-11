@@ -33,6 +33,9 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     protected User() {}
 
     public User(Role role, String name, String email, String password, String phone) {
@@ -68,4 +71,6 @@ public class User {
     public void setPhone(String phone) { this.phone = phone; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 }

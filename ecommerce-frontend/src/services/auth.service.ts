@@ -4,6 +4,7 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  CreateStoreRequest,
 } from "@/types/api";
 
 export async function login(payload: LoginRequest) {
@@ -18,4 +19,9 @@ export async function register(payload: RegisterRequest) {
 
 export async function logout() {
   await api.post("/auth/logout");
+}
+
+export async function openStore(payload: CreateStoreRequest) {
+  const res = await api.post<ApiResponse<AuthResponse>>("/auth/open-store", payload);
+  return res.data.data;
 }

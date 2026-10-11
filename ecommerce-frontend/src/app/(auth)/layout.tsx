@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { PageFallback } from "@/components/ui/PageFallback";
 
 export default function AuthLayout({
   children,
@@ -9,7 +11,9 @@ export default function AuthLayout({
         <Link href="/" className="font-display text-2xl">
           SHOP.CO
         </Link>
-        <div className="mt-8">{children}</div>
+        <div className="mt-8">
+          <Suspense fallback={<PageFallback />}>{children}</Suspense>
+        </div>
       </div>
     </div>
   );

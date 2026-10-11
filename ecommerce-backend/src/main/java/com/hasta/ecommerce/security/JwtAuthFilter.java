@@ -30,7 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                     FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
 
         String token = extractToken(request);
 
@@ -39,6 +39,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (token != null && !tokenBlacklistService.isBlacklisted(token) && jwtTokenProvider.isValid(token)) {
             String email = jwtTokenProvider.getEmailFromToken(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+            // Akun yang dinonaktifkan admin langsung kehilangan akses walau tokennya masih berlaku.
+            // Dibalas 401 supaya frontend (interceptor Part 12) otomatis mengeluarkan user.
+            if (!userDetails.isEnabled()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

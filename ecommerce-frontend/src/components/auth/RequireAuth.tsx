@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import type { UserRole } from "@/types/api";
@@ -12,20 +12,21 @@ interface RequireAuthProps {
 
 export function RequireAuth({ children, roles }: RequireAuthProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, hasHydrated } = useAuthStore();
 
   useEffect(() => {
     if (!hasHydrated) return;
 
     if (!user) {
-      router.replace("/login");
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
 
     if (roles && !roles.includes(user.role)) {
       router.replace("/");
     }
-  }, [hasHydrated, user, roles, router]);
+  }, [hasHydrated, user, roles, router, pathname]);
 
   if (!hasHydrated || !user || (roles && !roles.includes(user.role))) {
     return (

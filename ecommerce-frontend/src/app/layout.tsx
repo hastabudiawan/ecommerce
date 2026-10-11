@@ -15,7 +15,7 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SHOP.CO",
+  title: { default: "SHOP.CO", template: "%s | SHOP.CO" },
   description: "Find clothes that match your style",
 };
 

@@ -5,7 +5,9 @@ import com.hasta.ecommerce.auth.dto.LoginRequest;
 import com.hasta.ecommerce.auth.dto.RegisterRequest;
 import com.hasta.ecommerce.auth.service.AuthService;
 import com.hasta.ecommerce.common.response.ApiResponse;
+import com.hasta.ecommerce.security.SecurityUtils;
 import com.hasta.ecommerce.security.service.TokenBlacklistService;
+import com.hasta.ecommerce.store.dto.CreateStoreRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,15 @@ public class AuthController {
             tokenBlacklistService.blacklist(token);
         }
         return ResponseEntity.ok(ApiResponse.success("Logout berhasil", null));
+    }
+
+    // Endpoint baru untuk membuka toko
+    @PostMapping("/open-store")
+    public ResponseEntity<ApiResponse<AuthResponse>> openStore(
+            @Valid @RequestBody CreateStoreRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        AuthResponse response = authService.openStore(userId, request);
+        return ResponseEntity.ok(ApiResponse.success("Toko berhasil dibuat, akunmu sekarang seller", response));
     }
 
     private String extractToken(HttpServletRequest request) {

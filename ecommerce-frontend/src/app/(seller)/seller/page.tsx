@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { StoreForm } from "@/components/seller/StoreForm";
-import { getMyStore } from "@/services/store.service";
+import { createStore, getMyStore } from "@/services/store.service";
 import type { SellerStore } from "@/types/api";
 
 export default function SellerStorePage() {
@@ -33,7 +33,8 @@ export default function SellerStorePage() {
         </p>
         <div className="mt-6">
           <StoreForm
-            onCreated={(created: SellerStore) =>
+            mutationFn={createStore}
+            onSuccess={(created: SellerStore) =>
               queryClient.setQueryData(["seller-store"], created)
             }
           />

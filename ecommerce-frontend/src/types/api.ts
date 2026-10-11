@@ -196,3 +196,14 @@ export interface SettlementSummary {
   totalPending: number;
   totalReleased: number;
 }
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  enabled: boolean;
+  hasStore: boolean;
+  createdAt: string;
+}

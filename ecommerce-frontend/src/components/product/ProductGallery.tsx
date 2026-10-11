@@ -31,7 +31,14 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
                 active === i && "ring-2 ring-ink",
               )}
             >
-              <Image src={img.imageUrl} alt="" fill className="object-cover" />
+              {/* Tambahkan sizes="80px" di bawah ini */}
+              <Image
+                src={img.imageUrl}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
             </button>
           ))}
         </div>
