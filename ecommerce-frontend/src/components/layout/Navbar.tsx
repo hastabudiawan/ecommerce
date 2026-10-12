@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 
-import { useMutation } from "@tanstack/react-query";
+// Menggabungkan import @tanstack/react-query menjadi satu baris
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { logout as logoutApi } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
-import { useQuery } from "@tanstack/react-query";
 import { getCart } from "@/services/cart.service";
 
 const links = [
@@ -26,6 +26,7 @@ const links = [
 
 export function Navbar() {
   const router = useRouter();
+  const queryClient = useQueryClient(); // Tambahkan ini di awal komponen
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -45,6 +46,7 @@ export function Navbar() {
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
     onSettled: () => {
+      queryClient.clear(); // Bersihkan cache saat logout
       clearAuth();
       router.push("/");
     },
@@ -113,6 +115,10 @@ export function Navbar() {
                 <span className="hidden text-sm md:inline">{user.name}</span>
               </button>
               <div className="invisible absolute right-0 top-full z-10 w-40 rounded-xl border border-black/10 bg-white p-2 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
+                {/* Tambahan Menu Akun Saya */}
+                <Link href="/account" className="block rounded-lg px-3 py-2 text-sm hover:bg-surface">
+                  Akun Saya
+                </Link>
                 {user.role === "CUSTOMER" && (
                   <Link
                     href="/open-store"

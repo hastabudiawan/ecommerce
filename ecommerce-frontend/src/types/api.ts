@@ -207,3 +207,23 @@ export interface AdminUser {
   hasStore: boolean;
   createdAt: string;
 }
+
+export interface Account {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  hasStore: boolean;
+  createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+  name: string;
+  phone?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}

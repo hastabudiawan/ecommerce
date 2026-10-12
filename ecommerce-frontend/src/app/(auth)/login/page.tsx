@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query"; // Tambahkan useQueryClient di sini
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -37,6 +37,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient(); // Ambil client di sini
 
   const {
     register: registerField,
@@ -47,6 +48,9 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
+      // Bersihkan cache lama (misal: cart user sebelumnya)
+      queryClient.clear();
+      
       setAuth(data.token, {
         userId: data.userId,
         name: data.name,

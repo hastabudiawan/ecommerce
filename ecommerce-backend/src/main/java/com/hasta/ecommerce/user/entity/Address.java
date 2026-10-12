@@ -36,6 +36,10 @@ public class Address {
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
 
+    // Field baru ditambahkan di sini
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -114,5 +118,14 @@ public class Address {
 
     public void setDefault(boolean aDefault) {
         isDefault = aDefault;
+    }
+
+    // Accessor baru ditambahkan di sini
+    public boolean isActive() { 
+        return active; 
+    }
+    
+    public void setActive(boolean active) { 
+        this.active = active; 
     }
 }

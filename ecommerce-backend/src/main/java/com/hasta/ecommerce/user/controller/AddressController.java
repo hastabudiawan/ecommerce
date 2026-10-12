@@ -36,6 +36,22 @@ public class AddressController {
                 .body(ApiResponse.success("Address berhasil ditambahkan", created));
     }
 
+    // Endpoint baru untuk mengupdate alamat
+    @PutMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressDto>> update(
+            @PathVariable Long addressId, @Valid @RequestBody CreateAddressRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Address berhasil diubah", addressService.update(userId, addressId, request)));
+    }
+
+    @PutMapping("/{addressId}/default")
+    public ResponseEntity<ApiResponse<AddressDto>> setDefault(@PathVariable Long addressId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Alamat utama diperbarui", addressService.setDefault(userId, addressId)));
+    }
+
     @DeleteMapping("/{addressId}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long addressId) {
         Long userId = SecurityUtils.getCurrentUserId();

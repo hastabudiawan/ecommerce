@@ -124,7 +124,7 @@ function CheckoutContent() {
 
           {formVisible ? (
             <AddressForm
-              onCreated={handleAddressCreated}
+              onSaved={handleAddressCreated}
               onCancel={noAddress ? undefined : () => setShowForm(false)}
             />
           ) : (

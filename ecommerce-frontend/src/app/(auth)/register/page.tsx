@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -14,6 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient();
 
   const {
     register: registerField,
@@ -24,6 +25,9 @@ export default function RegisterPage() {
   const mutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
+      // Bersihkan cache lama sebelum login dengan akun baru
+      queryClient.clear();
+      
       // Register di backend langsung mengembalikan token, jadi user otomatis login
       setAuth(data.token, {
         userId: data.userId,

@@ -7,27 +7,37 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { getErrorMessage } from "@/lib/errors";
 import { addressSchema, type AddressFormValues } from "@/lib/validation/address";
-import { createAddress } from "@/services/address.service";
+import { createAddress, updateAddress } from "@/services/address.service";
 import type { Address } from "@/types/api";
 
 interface AddressFormProps {
-  onCreated: (address: Address) => void;
+  initial?: Address;
+  onSaved: (address: Address) => void;
   onCancel?: () => void;
 }
 
-export function AddressForm({ onCreated, onCancel }: AddressFormProps) {
+export function AddressForm({ initial, onSaved, onCancel }: AddressFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
-    defaultValues: { isDefault: false },
+    defaultValues: {
+      recipientName: initial?.recipientName ?? "",
+      phone: initial?.phone ?? "",
+      addressLine: initial?.addressLine ?? "",
+      city: initial?.city ?? "",
+      province: initial?.province ?? "",
+      postalCode: initial?.postalCode ?? "",
+      isDefault: initial?.isDefault ?? false,
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: createAddress,
-    onSuccess: onCreated,
+    mutationFn: (values: AddressFormValues) =>
+      initial ? updateAddress({ id: initial.id, payload: values }) : createAddress(values),
+    onSuccess: onSaved,
   });
 
   return (
@@ -64,10 +74,13 @@ export function AddressForm({ onCreated, onCancel }: AddressFormProps) {
         />
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" {...register("isDefault")} />
-        Jadikan alamat utama
-      </label>
+      {/* Alamat utama tidak bisa "dilepas" langsung, hanya dipindah dengan memilih alamat lain */}
+      {!initial?.isDefault && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" {...register("isDefault")} />
+          Jadikan alamat utama
+        </label>
+      )}
 
       {mutation.isError && (
         <p className="text-sm text-sale">{getErrorMessage(mutation.error)}</p>

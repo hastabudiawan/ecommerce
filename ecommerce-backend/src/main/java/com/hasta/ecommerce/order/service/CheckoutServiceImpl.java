@@ -75,6 +75,11 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new BadRequestException("Address ini bukan milik Anda");
         }
 
+        // Validasi tambahan: alamat tidak boleh yang sudah tidak aktif (diarsipkan)
+        if (!address.isActive()) {
+            throw new BadRequestException("Alamat ini sudah tidak dipakai, pilih alamat lain");
+        }
+
         User user = userRepository.findByIdOrThrow(userId);
 
         // LANGKAH 1: Validasi stok SEMUA item dulu, sebelum ada perubahan apapun

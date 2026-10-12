@@ -13,6 +13,7 @@ import com.hasta.ecommerce.user.entity.User;
 import com.hasta.ecommerce.user.repository.RoleRepository;
 import com.hasta.ecommerce.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException; // Import baru ditambahkan
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,18 +27,21 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final StoreService storeService; // Baru ditambahkan
+    private final StoreService storeService;
+    private final LoginAttemptService loginAttemptService; // Field baru ditambahkan
 
-    // Konstruktor diperbarui dengan penambahan StoreService
+    // Konstruktor diperbarui dengan penambahan LoginAttemptService
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
             PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-            JwtTokenProvider jwtTokenProvider, StoreService storeService) {
+            JwtTokenProvider jwtTokenProvider, StoreService storeService,
+            LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.storeService = storeService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Transactional
@@ -46,8 +50,7 @@ public class AuthService {
             throw new BadRequestException("Email sudah terdaftar");
         }
 
-        // Default role user baru: CUSTOMER. Role ADMIN cuma bisa di-assign manual lewat
-        // database
+        // Default role user baru: CUSTOMER. Role ADMIN cuma bisa di-assign manual lewat database
         // atau lewat endpoint khusus yang dilindungi (di luar scope tutorial ini).
         Role customerRole = roleRepository.findByName("CUSTOMER")
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -66,9 +69,21 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-        // Kalau baris di atas tidak throw exception, berarti email+password valid
+        // Cek dulu apakah email ini sedang diblokir karena terlalu banyak gagal login
+        loginAttemptService.checkAllowed(request.email());
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (BadCredentialsException e) {
+            // Jika login gagal (password salah), catat kegagalannya
+            loginAttemptService.recordFailure(request.email());
+            throw e;
+        }
+
+        // Jika berhasil login, reset counter kegagalan
+        loginAttemptService.reset(request.email());
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("User tidak ditemukan"));
@@ -77,7 +92,7 @@ public class AuthService {
         return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().getName());
     }
 
-    // Method baru untuk membuka toko
+    // Method untuk membuka toko
     @Transactional
     public AuthResponse openStore(Long userId, CreateStoreRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
