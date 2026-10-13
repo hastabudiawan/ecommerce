@@ -17,12 +17,28 @@ export const PROGRESS_STEPS: { status: OrderStatus; label: string }[] = [
   { status: "COMPLETED", label: "Selesai" },
 ];
 
-// Langkah berikutnya yang ditawarkan ke seller untuk tiap status.
-// Status yang tidak ada di sini (COMPLETED, CANCELLED) sudah final dan tidak punya aksi.
-export const SELLER_NEXT_ACTION: Partial<
-  Record<OrderStatus, { next: OrderStatus; label: string }>
-> = {
-  PENDING: { next: "PAID", label: "Konfirmasi Pembayaran" },
-  PAID: { next: "SHIPPED", label: "Kirim Pesanan" },
-  SHIPPED: { next: "COMPLETED", label: "Tandai Selesai" },
+export interface OrderAction {
+  next: OrderStatus;
+  label: string;
+  destructive?: boolean;
+}
+
+// Tindakan yang ditawarkan ke seller. Pesanan Dikirim tidak punya tindakan:
+// penyelesaiannya oleh pembeli (atau otomatis).
+export const SELLER_ACTIONS: Partial<Record<OrderStatus, OrderAction[]>> = {
+  PENDING: [
+    { next: "PAID", label: "Konfirmasi Pembayaran" },
+    { next: "CANCELLED", label: "Batalkan", destructive: true },
+  ],
+  PAID: [
+    { next: "SHIPPED", label: "Kirim Pesanan" },
+    { next: "CANCELLED", label: "Batalkan", destructive: true },
+  ],
+};
+
+// Admin memproses pesanan produk platform seperti seller, plus bisa menyelesaikan
+// pesanan yang sudah dikirim (misalnya saat pembeli tidak responsif).
+export const ADMIN_ACTIONS: Partial<Record<OrderStatus, OrderAction[]>> = {
+  ...SELLER_ACTIONS,
+  SHIPPED: [{ next: "COMPLETED", label: "Tandai Selesai" }],
 };

@@ -74,6 +74,9 @@ function CheckoutContent() {
   const groups = groupByStore(cart.items);
   const shippingTotal = groups.length * SHIPPING_FLAT_RATE;
   const total = cart.totalPrice + shippingTotal;
+  
+  // Logika baru: cek jika ada produk yang tidak tersedia atau stoknya kurang
+  const blocked = cart.items.some((item) => !item.available || item.quantity > item.stock);
 
   // Alamat terpilih: pilihan user, kalau belum ada pakai alamat utama, kalau tidak ada pakai yang pertama
   const addressId =
@@ -199,11 +202,20 @@ function CheckoutContent() {
 
         <Button
           onClick={handlePlaceOrder}
-          disabled={addressId === null || placeOrder.isPending}
+          // Disabled ditambahkan logika blocked
+          disabled={addressId === null || blocked || placeOrder.isPending}
           className="mt-6 w-full"
         >
           {placeOrder.isPending ? "Memproses..." : "Buat Pesanan"}
         </Button>
+
+        {/* Peringatan stok/ketersediaan baru ditambahkan di sini */}
+        {blocked && (
+          <p className="mt-3 text-sm text-sale">
+            Ada produk yang tidak tersedia atau stoknya kurang. Kembali ke keranjang
+            untuk memperbaikinya.
+          </p>
+        )}
 
         {addressId === null && (
           <p className="mt-3 text-sm text-black/50">

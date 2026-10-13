@@ -7,10 +7,12 @@ public record CartItemDto(
         Long productId,
         String productName,
         String productSlug,
-        String imageUrl,      // null kalau produk belum punya gambar
-        Long storeId,         // null = produk platform
-        String storeName,     // null = produk platform
+        String imageUrl,
+        Long storeId,
+        String storeName,
         BigDecimal priceSnapshot,
         Integer quantity,
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        int stock,
+        boolean available   // false kalau produk sudah ditolak atau diturunkan admin
 ) {}

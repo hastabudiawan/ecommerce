@@ -70,3 +70,13 @@ export async function updateOrderStatus({
   const res = await api.put<ApiResponse<Order>>(`/orders/${orderId}/status`, { status });
   return res.data.data;
 }
+
+export async function cancelOrder(id: number) {
+  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/cancel`);
+  return res.data.data;
+}
+
+export async function confirmOrder(id: number) {
+  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/confirm`);
+  return res.data.data;
+}

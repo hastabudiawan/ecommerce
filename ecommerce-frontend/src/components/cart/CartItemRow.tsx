@@ -42,9 +42,18 @@ export function CartItemRow({
 
       <div className="flex flex-1 flex-col justify-between">
         <div className="flex items-start justify-between gap-2">
-          <Link href={href} className="font-medium">
-            {item.productName}
-          </Link>
+          {/* Elemen Link dan peringatan dibungkus dalam satu div */}
+          <div>
+            <Link href={href} className="font-medium">
+              {item.productName}
+            </Link>
+            {!item.available && (
+              <p className="mt-1 text-sm text-sale">Produk ini sudah tidak tersedia</p>
+            )}
+            {item.available && item.quantity > item.stock && (
+              <p className="mt-1 text-sm text-sale">Stok tersisa {item.stock}</p>
+            )}
+          </div>
           <button
             onClick={onRemove}
             disabled={disabled}
@@ -72,7 +81,8 @@ export function CartItemRow({
             <span className="w-8 text-center text-sm">{item.quantity}</span>
             <button
               onClick={() => onChangeQuantity(item.quantity + 1)}
-              disabled={disabled}
+              // Logic disabled diperbarui sesuai permintaan
+              disabled={disabled || !item.available || item.quantity >= item.stock}
               aria-label="Tambah"
               className="p-3 disabled:opacity-40"
             >

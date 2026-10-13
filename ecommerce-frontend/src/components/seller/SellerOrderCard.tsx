@@ -1,29 +1,29 @@
 import { Store } from "lucide-react";
 import { StatusBadge } from "@/components/order/StatusBadge";
 import { Button } from "@/components/ui/Button";
-import { SELLER_NEXT_ACTION } from "@/lib/order-status";
+import type { OrderAction } from "@/lib/order-status";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types/api";
 
 interface SellerOrderCardProps {
   order: Order;
-  updating: boolean;
+  actions?: OrderAction[];
+  note?: string;
   disabled: boolean;
-  onAdvance: (status: OrderStatus, label: string) => void;
+  updatingStatus: OrderStatus | null; // status tujuan yang sedang diproses untuk pesanan ini
+  onAction: (action: OrderAction) => void;
   storeLabel?: string; // diisi di dashboard admin
-  readOnly?: boolean; // menyembunyikan tombol aksi
 }
 
 export function SellerOrderCard({
   order,
-  updating,
+  actions,
+  note,
   disabled,
-  onAdvance,
+  updatingStatus,
+  onAction,
   storeLabel,
-  readOnly = false,
 }: SellerOrderCardProps) {
-  const action = readOnly ? undefined : SELLER_NEXT_ACTION[order.status];
-
   return (
     <div className="rounded-2xl border border-black/10 p-4 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -57,7 +57,7 @@ export function SellerOrderCard({
         <p className="text-black/60">{order.shippingAddress}</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-4">
+      <div className="mt-4 border-t border-black/10 pt-4">
         <p className="text-sm">
           <span className="text-black/60">
             Total (ongkir {formatRupiah(order.shippingCost)}){" "}
@@ -65,14 +65,22 @@ export function SellerOrderCard({
           <span className="font-semibold">{formatRupiah(order.total)}</span>
         </p>
 
-        {action && (
-          <Button
-            className="px-6 py-3"
-            disabled={disabled}
-            onClick={() => onAdvance(action.next, action.label)}
-          >
-            {updating ? "Memproses..." : action.label}
-          </Button>
+        {note && <p className="mt-3 text-sm text-black/50">{note}</p>}
+
+        {actions && actions.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {actions.map((action) => (
+              <Button
+                key={action.next}
+                variant={action.destructive ? "outline" : "primary"}
+                className={action.destructive ? "px-6 py-3 text-sale" : "px-6 py-3"}
+                disabled={disabled}
+                onClick={() => onAction(action)}
+              >
+                {updatingStatus === action.next ? "Memproses..." : action.label}
+              </Button>
+            ))}
+          </div>
         )}
       </div>
     </div>

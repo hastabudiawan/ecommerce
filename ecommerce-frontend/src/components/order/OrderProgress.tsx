@@ -1,43 +1,88 @@
-import { Check } from "lucide-react";
-import { PROGRESS_STEPS } from "@/lib/order-status";
-import { cn } from "@/lib/utils";
-import type { OrderStatus } from "@/types/api";
+"use client";
 
-export function OrderProgress({ status }: { status: OrderStatus }) {
-  const current = PROGRESS_STEPS.findIndex((step) => step.status === status);
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/Button";
+import { getErrorMessage } from "@/lib/errors";
+import { cancelOrder, confirmOrder } from "@/services/order.service";
+import type { Order } from "@/types/api";
 
-  return (
-    <ol className="flex items-start">
-      {PROGRESS_STEPS.map((step, index) => {
-        const done = index <= current;
+export function OrderActions({ order }: { order: Order }) {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
 
-        return (
-          <li
-            key={step.status}
-            className="relative flex flex-1 flex-col items-center text-center"
-          >
-            {index > 0 && (
-              <span
-                className={cn(
-                  "absolute right-1/2 top-4 h-0.5 w-full -translate-y-1/2",
-                  done ? "bg-ink" : "bg-black/10",
-                )}
-              />
-            )}
-            <span
-              className={cn(
-                "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs",
-                done ? "bg-ink text-white" : "bg-surface text-black/40",
-              )}
-            >
-              {done ? <Check size={16} /> : index + 1}
-            </span>
-            <span className={cn("mt-2 text-xs", done ? "text-black" : "text-black/40")}>
-              {step.label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
+  function handleSuccess(updated: Order) {
+    setError(null);
+    queryClient.setQueryData(["order", updated.id], updated);
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    // Pembatalan mengembalikan stok produk
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+  }
+
+  const cancel = useMutation({
+    mutationFn: cancelOrder,
+    onSuccess: handleSuccess,
+    onError: (err) => setError(getErrorMessage(err)),
+  });
+
+  const receive = useMutation({
+    mutationFn: confirmOrder,
+    onSuccess: handleSuccess,
+    onError: (err) => setError(getErrorMessage(err)),
+  });
+
+  const busy = cancel.isPending || receive.isPending;
+
+  function handleCancel() {
+    if (!window.confirm("Batalkan pesanan ini? Pesanan tidak bisa dilanjutkan lagi.")) return;
+    setError(null);
+    cancel.mutate(order.id);
+  }
+
+  function handleReceive() {
+    if (!window.confirm("Konfirmasi bahwa pesanan sudah kamu terima?")) return;
+    setError(null);
+    receive.mutate(order.id);
+  }
+
+  if (order.status === "PENDING") {
+    return (
+      <div>
+        <Button
+          variant="outline"
+          className="px-6 py-3 text-sale"
+          disabled={busy}
+          onClick={handleCancel}
+        >
+          {cancel.isPending ? "Memproses..." : "Batalkan Pesanan"}
+        </Button>
+        {error && <p className="mt-3 text-sm text-sale">{error}</p>}
+      </div>
+    );
+  }
+
+  if (order.status === "PAID") {
+    return (
+      <p className="text-sm text-black/50">
+        Pesanan sudah dibayar. Untuk membatalkannya, hubungi penjual.
+      </p>
+    );
+  }
+
+  if (order.status === "SHIPPED") {
+    return (
+      <div>
+        <Button className="px-6 py-3" disabled={busy} onClick={handleReceive}>
+          {receive.isPending ? "Memproses..." : "Pesanan Diterima"}
+        </Button>
+        <p className="mt-2 text-sm text-black/50">
+          Konfirmasi setelah barang sampai. Jika tidak dikonfirmasi, pesanan
+          otomatis selesai dalam beberapa hari.
+        </p>
+        {error && <p className="mt-3 text-sm text-sale">{error}</p>}
+      </div>
+    );
+  }
+
+  return null;
 }

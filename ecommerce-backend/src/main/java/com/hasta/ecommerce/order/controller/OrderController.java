@@ -90,4 +90,18 @@ public class OrderController {
         Page<OrderDto> result = orderService.getForAdmin(status, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<OrderDto>> cancel(@PathVariable Long orderId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Pesanan dibatalkan", orderService.cancelByCustomer(userId, orderId)));
+    }
+
+    @PutMapping("/{orderId}/confirm")
+    public ResponseEntity<ApiResponse<OrderDto>> confirm(@PathVariable Long orderId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Pesanan dikonfirmasi diterima", orderService.confirmByCustomer(userId, orderId)));
+    }
 }

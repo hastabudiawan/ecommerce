@@ -73,6 +73,9 @@ function CartContent() {
     groups.get(item.storeId)!.items.push(item);
   }
 
+  // Logika baru untuk memblokir checkout jika ada masalah stok/ketersediaan
+  const blocked = cart.items.some((item) => !item.available || item.quantity > item.stock);
+
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_400px] lg:items-start">
       <div className="space-y-6 rounded-2xl border border-black/10 p-4 md:p-6">
@@ -112,12 +115,25 @@ function CartContent() {
 
         {error && <p className="mt-4 text-sm text-sale">{error}</p>}
 
-        <Link
-          href="/checkout"
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-4 text-sm font-medium text-white hover:opacity-90"
-        >
-          Go to Checkout <ArrowRight size={18} />
-        </Link>
+        {/* Blok kondisional baru untuk tombol checkout */}
+        {blocked ? (
+          <>
+            <p className="mt-6 rounded-lg bg-sale-bg px-4 py-3 text-sm text-sale">
+              Ada produk yang tidak tersedia atau stoknya kurang. Perbaiki dulu untuk
+              melanjutkan.
+            </p>
+            <span className="mt-3 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-ink px-8 py-4 text-sm font-medium text-white opacity-40">
+              Go to Checkout <ArrowRight size={18} />
+            </span>
+          </>
+        ) : (
+          <Link
+            href="/checkout"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-4 text-sm font-medium text-white hover:opacity-90"
+          >
+            Go to Checkout <ArrowRight size={18} />
+          </Link>
+        )}
       </aside>
     </div>
   );

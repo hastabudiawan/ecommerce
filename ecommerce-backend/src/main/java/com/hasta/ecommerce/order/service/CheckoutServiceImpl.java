@@ -17,6 +17,8 @@ import com.hasta.ecommerce.order.entity.OrderItem;
 import com.hasta.ecommerce.order.repository.OrderGroupRepository;
 import com.hasta.ecommerce.order.repository.OrderRepository;
 import com.hasta.ecommerce.product.entity.Product;
+import com.hasta.ecommerce.product.entity.ProductStatus;
+import com.hasta.ecommerce.product.repository.ProductRepository;
 import com.hasta.ecommerce.store.entity.Store;
 import com.hasta.ecommerce.store.repository.StoreRepository;
 import com.hasta.ecommerce.user.entity.Address;
@@ -34,8 +36,8 @@ import java.util.stream.Collectors;
 public class CheckoutServiceImpl implements CheckoutService {
 
     // Sentinel value: mewakili "produk platform" (tanpa toko) di dalam grouping internal.
-    // Collectors.groupingBy() tidak mengizinkan null sebagai key, jadi kita pakai 0L
-    // sebagai penanda, karena ID toko asli selalu mulai dari 1 (BIGSERIAL).
+    // Collectors.groupingBy() tidak mengizinkan null sebagai key, jadi dipakai 0L sebagai
+    // penanda, karena ID toko asli selalu mulai dari 1 (BIGSERIAL).
     private static final Long PLATFORM_KEY = 0L;
 
     private final CartRepository cartRepository;
@@ -44,16 +46,19 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final OrderRepository orderRepository;
     private final OrderGroupRepository orderGroupRepository;
     private final StoreRepository storeRepository;
+    private final ProductRepository productRepository;
 
     public CheckoutServiceImpl(CartRepository cartRepository, AddressRepository addressRepository,
                                 UserRepository userRepository, OrderRepository orderRepository,
-                                OrderGroupRepository orderGroupRepository, StoreRepository storeRepository) {
+                                OrderGroupRepository orderGroupRepository, StoreRepository storeRepository,
+                                ProductRepository productRepository) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.orderGroupRepository = orderGroupRepository;
         this.storeRepository = storeRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -74,17 +79,22 @@ public class CheckoutServiceImpl implements CheckoutService {
         if (!address.getUser().getId().equals(userId)) {
             throw new BadRequestException("Address ini bukan milik Anda");
         }
-
-        // Validasi tambahan: alamat tidak boleh yang sudah tidak aktif (diarsipkan)
         if (!address.isActive()) {
             throw new BadRequestException("Alamat ini sudah tidak dipakai, pilih alamat lain");
         }
 
         User user = userRepository.findByIdOrThrow(userId);
 
-        // LANGKAH 1: Validasi stok SEMUA item dulu, sebelum ada perubahan apapun
+        // LANGKAH 1: Validasi SEMUA item dulu, sebelum ada perubahan apa pun.
+        // Ini pemeriksaan awal supaya pesan errornya jelas; penjaga stok yang sebenarnya
+        // adalah update atomik di langkah 2.
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
+
+            if (product.getStatus() != ProductStatus.APPROVED) {
+                throw new BadRequestException("Produk '" + product.getName()
+                        + "' sudah tidak tersedia, hapus dari keranjang untuk melanjutkan");
+            }
             if (product.getStock() < cartItem.getQuantity()) {
                 throw new InsufficientStockException(
                         "Stok produk '" + product.getName() + "' tidak cukup. Tersedia: "
@@ -92,15 +102,32 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
         }
 
-        // LANGKAH 2: Kelompokkan cart items berdasarkan toko.
-        // PLATFORM_KEY dipakai buat produk tanpa toko, karena groupingBy tidak boleh pakai null sebagai key.
+        // LANGKAH 2: Kurangi stok secara atomik. Dua checkout bersamaan untuk stok yang sama
+        // tidak mungkin sama-sama berhasil. Diurutkan menurut id produk supaya dua checkout
+        // dengan produk sama dalam urutan berbeda tidak saling mengunci (deadlock).
+        // Kalau ada yang gagal, exception membatalkan seluruh transaksi, termasuk
+        // pengurangan stok produk sebelumnya.
+        cart.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .forEach(item -> {
+                    int updated = productRepository.decreaseStock(
+                            item.getProduct().getId(), item.getQuantity());
+                    if (updated == 0) {
+                        throw new InsufficientStockException("Stok produk '"
+                                + item.getProduct().getName()
+                                + "' tidak cukup. Stoknya baru saja berubah, coba lagi.");
+                    }
+                });
+
+        // LANGKAH 3: Kelompokkan cart items berdasarkan toko.
+        // PLATFORM_KEY dipakai buat produk tanpa toko, karena groupingBy tidak boleh pakai null.
         Map<Long, List<CartItem>> groupedByStore = cart.getItems().stream()
                 .collect(Collectors.groupingBy(item -> {
                     Store store = item.getProduct().getStore();
                     return store != null ? store.getId() : PLATFORM_KEY;
                 }, LinkedHashMap::new, Collectors.toList()));
 
-        // LANGKAH 3: Siapkan lookup shipping cost per toko dari request.
+        // LANGKAH 4: Siapkan lookup shipping cost per toko dari request.
         // storeId null dari client (representasi platform di sisi API) dipetakan ke PLATFORM_KEY juga.
         Map<Long, BigDecimal> shippingLookup = new HashMap<>();
         if (request.shippingCosts() != null) {
@@ -110,7 +137,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
         }
 
-        // LANGKAH 4: Buat 1 Order per toko
+        // LANGKAH 5: Buat 1 Order per toko
         List<Order> createdOrders = new ArrayList<>();
         BigDecimal groupSubtotal = BigDecimal.ZERO;
         BigDecimal groupShippingCost = BigDecimal.ZERO;
@@ -137,16 +164,14 @@ public class CheckoutServiceImpl implements CheckoutService {
 
             for (CartItem cartItem : items) {
                 Product product = cartItem.getProduct();
-                BigDecimal itemSubtotal = cartItem.getPriceSnapshot().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                BigDecimal itemSubtotal = cartItem.getPriceSnapshot()
+                        .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
                 OrderItem orderItem = new OrderItem(
                         product, product.getName(), cartItem.getPriceSnapshot(),
                         cartItem.getQuantity(), itemSubtotal
                 );
                 order.addItem(orderItem);
-
-                // Kurangi stok produk
-                product.setStock(product.getStock() - cartItem.getQuantity());
             }
 
             createdOrders.add(order);
@@ -156,7 +181,7 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         BigDecimal groupTotal = groupSubtotal.add(groupShippingCost);
 
-        // LANGKAH 5: Buat OrderGroup, lalu simpan, baru kaitkan tiap Order ke group ini
+        // LANGKAH 6: Buat OrderGroup, lalu simpan, baru kaitkan tiap Order ke group ini
         OrderGroup orderGroup = new OrderGroup(user, address, OrderNumberGenerator.generateGroupNumber(),
                 groupSubtotal, groupShippingCost, groupTotal);
         OrderGroup savedGroup = orderGroupRepository.save(orderGroup);
@@ -166,7 +191,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             orderRepository.save(order);
         }
 
-        // LANGKAH 6: Kosongkan cart
+        // LANGKAH 7: Kosongkan cart
         cart.getItems().clear();
 
         return OrderMapper.toGroupDto(savedGroup, createdOrders);

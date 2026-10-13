@@ -78,6 +78,8 @@ export interface CartItemDto {
   priceSnapshot: number;
   quantity: number;
   subtotal: number;
+  stock: number;
+  available: boolean;
 }
 export interface CartDto {
   id: number | null;
@@ -112,7 +114,12 @@ export interface CreateAddressRequest {
   isDefault: boolean;
 }
 
-export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+export type OrderStatus =
+  | "PENDING"
+  | "PAID"
+  | "SHIPPED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export interface OrderItem {
   productId: number;

@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -19,5 +21,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.store.seller.id = :sellerId")
     Page<Order> findByStoreSellerId(@Param("sellerId") Long sellerId, Pageable pageable);
+    
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
+    // Method baru ditambahkan di sini
+    List<Order> findByStatusAndUpdatedAtBefore(OrderStatus status, LocalDateTime cutoff);
 }

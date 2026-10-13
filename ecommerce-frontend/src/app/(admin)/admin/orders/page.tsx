@@ -7,6 +7,7 @@ import { Pagination } from "@/components/product/Pagination";
 import { SellerOrderCard } from "@/components/seller/SellerOrderCard";
 import { useListParams } from "@/hooks/useListParams";
 import { getErrorMessage } from "@/lib/errors";
+import { ADMIN_ACTIONS, type OrderAction } from "@/lib/order-status";
 import { getOrdersForAdmin, updateOrderStatus } from "@/services/order.service";
 import type { Order, OrderStatus } from "@/types/api";
 
@@ -45,15 +46,23 @@ export default function AdminOrdersPage() {
     onSuccess: () => {
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err) => setError(getErrorMessage(err)),
   });
 
-  function handleAdvance(order: Order, nextStatus: OrderStatus, label: string) {
-    if (!window.confirm(`Ubah pesanan ${order.orderNumber}: "${label}"?`)) return;
+  function handleAction(order: Order, action: OrderAction) {
+    const extra =
+      action.next === "CANCELLED"
+        ? "\n\nStok produk akan dikembalikan dan pesanan tidak bisa dilanjutkan lagi."
+        : "";
+
+    if (!window.confirm(`Ubah pesanan ${order.orderNumber}: "${action.label}"?${extra}`)) {
+      return;
+    }
 
     setError(null);
-    updateStatus.mutate({ orderId: order.id, status: nextStatus });
+    updateStatus.mutate({ orderId: order.id, status: action.next });
   }
 
   return (
@@ -83,12 +92,15 @@ export default function AdminOrdersPage() {
             key={order.id}
             order={order}
             storeLabel={order.storeName ?? "Platform"}
-            readOnly={order.storeId !== null}
+            // Hanya pesanan produk platform yang diproses admin; pesanan toko read-only
+            actions={order.storeId === null ? ADMIN_ACTIONS[order.status] : undefined}
             disabled={updateStatus.isPending}
-            updating={
+            updatingStatus={
               updateStatus.isPending && updateStatus.variables?.orderId === order.id
+                ? updateStatus.variables.status
+                : null
             }
-            onAdvance={(nextStatus, label) => handleAdvance(order, nextStatus, label)}
+            onAction={(action) => handleAction(order, action)}
           />
         ))}
       </div>

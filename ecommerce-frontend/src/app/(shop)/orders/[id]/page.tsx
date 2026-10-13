@@ -5,14 +5,19 @@ import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Store } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import { OrderProgress } from "@/components/order/OrderProgress";
+// import { OrderProgress } from "@/components/order/OrderProgress";
 import { StatusBadge } from "@/components/order/StatusBadge";
 import { Container } from "@/components/ui/Container";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import { getOrder } from "@/services/order.service";
+import { OrderActions } from "@/components/order/OrderActions";
 
 function OrderDetailContent({ id }: { id: number }) {
-  const { data: order, isLoading, isError } = useQuery({
+  const {
+    data: order,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["order", id],
     queryFn: () => getOrder(id),
     enabled: Number.isInteger(id),
@@ -48,14 +53,16 @@ function OrderDetailContent({ id }: { id: number }) {
             <div>
               <p className="text-sm text-black/50">No. Pesanan</p>
               <p className="font-medium">{order.orderNumber}</p>
-              <p className="mt-1 text-sm text-black/50">{formatDate(order.createdAt)}</p>
+              <p className="mt-1 text-sm text-black/50">
+                {formatDate(order.createdAt)}
+              </p>
             </div>
             <StatusBadge status={order.status} />
           </div>
 
           {order.status !== "CANCELLED" && (
             <div className="mt-6">
-              <OrderProgress status={order.status} />
+              <OrderActions order={order} />
             </div>
           )}
         </section>
@@ -68,7 +75,10 @@ function OrderDetailContent({ id }: { id: number }) {
 
           <ul className="mt-3 divide-y divide-black/10">
             {order.items.map((item) => (
-              <li key={item.productId} className="flex justify-between gap-4 py-3">
+              <li
+                key={item.productId}
+                className="flex justify-between gap-4 py-3"
+              >
                 <div>
                   <p className="font-medium">{item.productName}</p>
                   <p className="text-sm text-black/50">

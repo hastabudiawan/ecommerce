@@ -12,6 +12,7 @@ import com.hasta.ecommerce.common.exception.BadRequestException;
 import com.hasta.ecommerce.common.exception.InsufficientStockException;
 import com.hasta.ecommerce.common.exception.ResourceNotFoundException;
 import com.hasta.ecommerce.product.entity.Product;
+import com.hasta.ecommerce.product.entity.ProductStatus; // Import baru ditambahkan
 import com.hasta.ecommerce.product.repository.ProductRepository;
 import com.hasta.ecommerce.user.entity.User;
 import com.hasta.ecommerce.user.repository.UserRepository;
@@ -51,6 +52,11 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Product dengan id " + request.productId() + " tidak ditemukan"));
+
+        // Pengecekan baru: tolak jika produk belum/tidak di-approve
+        if (product.getStatus() != ProductStatus.APPROVED) {
+            throw new BadRequestException("Produk ini tidak tersedia");
+        }
 
         CartItem existingItem = cart.getItems().stream()
                 .filter(i -> i.getProduct().getId().equals(product.getId()))

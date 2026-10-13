@@ -19,4 +19,10 @@ public interface OrderService {
     OrderDto updateStatusAsSeller(Long sellerId, Long orderId, UpdateOrderStatusRequest request);
 
     Page<OrderDto> getForAdmin(OrderStatus status, Pageable pageable);
+
+    OrderDto cancelByCustomer(Long userId, Long orderId);
+
+    OrderDto confirmByCustomer(Long userId, Long orderId);
+
+    int autoCompleteShipped(int days);
 }
