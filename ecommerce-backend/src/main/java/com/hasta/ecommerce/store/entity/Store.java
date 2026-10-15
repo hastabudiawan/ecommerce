@@ -3,6 +3,7 @@ package com.hasta.ecommerce.store.entity;
 import com.hasta.ecommerce.user.entity.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "stores")
@@ -31,7 +32,22 @@ public class Store {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    protected Store() {}
+    @Column(name = "shipping_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal shippingFee = new BigDecimal("15000");
+
+    public BigDecimal getShippingFee() {
+        return shippingFee;
+    }
+
+    public void update(String storeName, String description, String city, BigDecimal shippingFee) {
+        this.storeName = storeName;
+        this.description = description;
+        this.city = city;
+        this.shippingFee = shippingFee;
+    }
+
+    protected Store() {
+    }
 
     public Store(User seller, String storeName, String slug, String description, String city) {
         this.seller = seller;
@@ -46,11 +62,31 @@ public class Store {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Long getId() { return id; }
-    public User getSeller() { return seller; }
-    public String getStoreName() { return storeName; }
-    public String getSlug() { return slug; }
-    public String getDescription() { return description; }
-    public String getCity() { return city; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Long getId() {
+        return id;
+    }
+
+    public User getSeller() {
+        return seller;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

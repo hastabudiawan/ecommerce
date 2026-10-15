@@ -6,6 +6,7 @@ import com.hasta.ecommerce.common.util.SlugGenerator;
 import com.hasta.ecommerce.store.dto.CreateStoreRequest;
 import com.hasta.ecommerce.store.dto.StoreDto;
 import com.hasta.ecommerce.store.dto.StoreMapper;
+import com.hasta.ecommerce.store.dto.UpdateStoreRequest; // Import baru ditambahkan
 import com.hasta.ecommerce.store.entity.Store;
 import com.hasta.ecommerce.store.repository.StoreRepository;
 import com.hasta.ecommerce.user.entity.User;
@@ -57,6 +58,22 @@ public class StoreServiceImpl implements StoreService {
         return StoreMapper.toDto(store);
     }
 
+    // Method baru untuk update data toko
+    @Override
+    public StoreDto updateMyStore(Long sellerId, UpdateStoreRequest request) {
+        Store store = storeRepository.findBySellerId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Anda belum punya toko"));
+
+        store.update(
+                request.storeName().trim(),
+                blankToNull(request.description()),
+                blankToNull(request.city()),
+                request.shippingFee()
+        );
+
+        return StoreMapper.toDto(store);
+    }
+
     private String ensureUniqueSlug(String baseSlug) {
         String slug = baseSlug;
         int counter = 1;
@@ -64,5 +81,10 @@ public class StoreServiceImpl implements StoreService {
             slug = baseSlug + "-" + counter++;
         }
         return slug;
+    }
+
+    // Helper method untuk mengubah String kosong/blank menjadi null
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

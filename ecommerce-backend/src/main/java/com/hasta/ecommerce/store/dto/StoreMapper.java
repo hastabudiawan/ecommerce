@@ -7,6 +7,6 @@ public class StoreMapper {
 
     public static StoreDto toDto(Store store) {
         return new StoreDto(store.getId(), store.getStoreName(), store.getSlug(),
-                store.getDescription(), store.getCity());
+                store.getDescription(), store.getCity(), store.getShippingFee());
     }
 }
