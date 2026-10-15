@@ -43,7 +43,8 @@ public class SettlementServiceImpl implements SettlementService {
             return;
         }
 
-        Settlement settlement = new Settlement(order.getStore(), order, order.getTotal());
+        // Pembuatan settlement diperbarui menggunakan method settlementAmount
+        Settlement settlement = new Settlement(order.getStore(), order, settlementAmount(order));
         settlementRepository.save(settlement);
     }
 
@@ -87,5 +88,12 @@ public class SettlementServiceImpl implements SettlementService {
                 ? settlementRepository.findByStatus(status, pageable)
                 : settlementRepository.findAll(pageable);
         return settlements.map(SettlementMapper::toDto);
+    }
+
+    // Satu-satunya tempat aturan jumlah settlement. Saat ini seller menerima subtotal produk
+    // ditambah ongkir yang ia tetapkan sendiri, karena seller yang mengirim barang.
+    // Kalau nanti ada potongan komisi platform, ubah di sini.
+    private BigDecimal settlementAmount(Order order) {
+        return order.getSubtotal().add(order.getShippingCost());
     }
 }
