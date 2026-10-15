@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import type {
   ApiResponse,
+  CheckoutPreview,
   CheckoutRequest,
   Order,
   OrderGroup,
@@ -8,8 +9,14 @@ import type {
   PageResponse,
 } from "@/types/api";
 
+// Customer
 export async function checkout(payload: CheckoutRequest) {
   const res = await api.post<ApiResponse<OrderGroup>>("/orders/checkout", payload);
+  return res.data.data;
+}
+
+export async function previewCheckout() {
+  const res = await api.get<ApiResponse<CheckoutPreview>>("/orders/preview");
   return res.data.data;
 }
 
@@ -25,6 +32,17 @@ export async function getOrder(id: number) {
   return res.data.data;
 }
 
+export async function cancelOrder(id: number) {
+  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/cancel`);
+  return res.data.data;
+}
+
+export async function confirmOrder(id: number) {
+  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/confirm`);
+  return res.data.data;
+}
+
+// Seller
 export async function getSellerOrders({ page, size }: { page: number; size: number }) {
   const res = await api.get<ApiResponse<PageResponse<Order>>>("/orders/seller", {
     params: { page, size },
@@ -45,6 +63,7 @@ export async function updateSellerOrderStatus({
   return res.data.data;
 }
 
+// Admin
 export async function getOrdersForAdmin({
   status,
   page,
@@ -68,15 +87,5 @@ export async function updateOrderStatus({
   status: OrderStatus;
 }) {
   const res = await api.put<ApiResponse<Order>>(`/orders/${orderId}/status`, { status });
-  return res.data.data;
-}
-
-export async function cancelOrder(id: number) {
-  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/cancel`);
-  return res.data.data;
-}
-
-export async function confirmOrder(id: number) {
-  const res = await api.put<ApiResponse<Order>>(`/orders/${id}/confirm`);
   return res.data.data;
 }

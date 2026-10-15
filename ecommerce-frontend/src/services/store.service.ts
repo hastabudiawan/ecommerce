@@ -1,6 +1,11 @@
 import axios from "axios";
 import { api } from "@/lib/api";
-import type { ApiResponse, CreateStoreRequest, SellerStore } from "@/types/api";
+import type {
+  ApiResponse,
+  CreateStoreRequest,
+  SellerStore,
+  UpdateStoreRequest,
+} from "@/types/api";
 
 // Backend membalas 404 kalau seller belum punya toko. Itu keadaan normal,
 // bukan error, jadi diubah jadi null supaya mudah dibedakan di halaman.
@@ -18,5 +23,10 @@ export async function getMyStore(): Promise<SellerStore | null> {
 
 export async function createStore(payload: CreateStoreRequest) {
   const res = await api.post<ApiResponse<SellerStore>>("/seller/store", payload);
+  return res.data.data;
+}
+
+export async function updateMyStore(payload: UpdateStoreRequest) {
+  const res = await api.put<ApiResponse<SellerStore>>("/seller/store", payload);
   return res.data.data;
 }

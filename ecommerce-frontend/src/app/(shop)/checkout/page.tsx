@@ -12,11 +12,10 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { groupByStore } from "@/lib/cart";
 import { getErrorMessage } from "@/lib/errors";
-import { SHIPPING_FLAT_RATE } from "@/lib/shipping";
 import { formatRupiah } from "@/lib/utils";
 import { getAddresses } from "@/services/address.service";
 import { getCart } from "@/services/cart.service";
-import { checkout } from "@/services/order.service";
+import { checkout, previewCheckout } from "@/services/order.service";
 import type { Address, OrderGroup } from "@/types/api";
 
 function CheckoutContent() {
@@ -37,12 +36,21 @@ function CheckoutContent() {
     queryFn: getAddresses,
   });
 
+  // Ongkir dihitung server. Selalu diambil ulang supaya tarif toko yang baru diubah ikut terbaca.
+  const { data: preview, isLoading: previewLoading } = useQuery({
+    queryKey: ["checkout-preview"],
+    queryFn: previewCheckout,
+    staleTime: 0,
+  });
+
   const placeOrder = useMutation({
     mutationFn: checkout,
     onSuccess: (group) => {
       setResult(group);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["checkout-preview"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err) => setError(getErrorMessage(err)),
   });
@@ -53,7 +61,7 @@ function CheckoutContent() {
     return <CheckoutSuccess group={result} />;
   }
 
-  if (cartLoading || addressLoading) {
+  if (cartLoading || addressLoading || previewLoading) {
     return <p className="mt-8 text-sm text-black/50">Memuat...</p>;
   }
 
@@ -71,11 +79,20 @@ function CheckoutContent() {
     );
   }
 
+  if (!preview) {
+    return (
+      <p className="mt-8 text-sm text-sale">
+        Gagal memuat ringkasan pesanan. Muat ulang halaman.
+      </p>
+    );
+  }
+
   const groups = groupByStore(cart.items);
-  const shippingTotal = groups.length * SHIPPING_FLAT_RATE;
-  const total = cart.totalPrice + shippingTotal;
-  
-  // Logika baru: cek jika ada produk yang tidak tersedia atau stoknya kurang
+
+  const shippingByStore = new Map<number | null, number>(
+    preview.stores.map((store): [number | null, number] => [store.storeId, store.shippingCost]),
+  );
+
   const blocked = cart.items.some((item) => !item.available || item.quantity > item.stock);
 
   // Alamat terpilih: pilihan user, kalau belum ada pakai alamat utama, kalau tidak ada pakai yang pertama
@@ -88,7 +105,7 @@ function CheckoutContent() {
   const noAddress = (addresses?.length ?? 0) === 0;
   const formVisible = showForm || noAddress;
 
-  function handleAddressCreated(address: Address) {
+  function handleAddressSaved(address: Address) {
     queryClient.invalidateQueries({ queryKey: ["addresses"] });
     setSelectedAddressId(address.id);
     setShowForm(false);
@@ -97,13 +114,7 @@ function CheckoutContent() {
   function handlePlaceOrder() {
     if (addressId === null) return;
     setError(null);
-    placeOrder.mutate({
-      addressId,
-      shippingCosts: groups.map((group) => ({
-        storeId: group.storeId,
-        shippingCost: SHIPPING_FLAT_RATE,
-      })),
-    });
+    placeOrder.mutate({ addressId });
   }
 
   return (
@@ -127,7 +138,7 @@ function CheckoutContent() {
 
           {formVisible ? (
             <AddressForm
-              onSaved={handleAddressCreated}
+              onSaved={handleAddressSaved}
               onCancel={noAddress ? undefined : () => setShowForm(false)}
             />
           ) : (
@@ -170,7 +181,7 @@ function CheckoutContent() {
 
                 <div className="mt-3 flex justify-between border-t border-black/10 pt-3 text-sm">
                   <span className="text-black/60">Ongkos kirim</span>
-                  <span>{formatRupiah(SHIPPING_FLAT_RATE)}</span>
+                  <span>{formatRupiah(shippingByStore.get(group.storeId) ?? 0)}</span>
                 </div>
               </div>
             ))}
@@ -184,17 +195,17 @@ function CheckoutContent() {
         <dl className="mt-5 space-y-3">
           <div className="flex justify-between">
             <dt className="text-black/60">Subtotal</dt>
-            <dd className="font-semibold">{formatRupiah(cart.totalPrice)}</dd>
+            <dd className="font-semibold">{formatRupiah(preview.subtotal)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-black/60">
-              Ongkos kirim ({groups.length} toko)
+              Ongkos kirim ({preview.stores.length} toko)
             </dt>
-            <dd className="font-semibold">{formatRupiah(shippingTotal)}</dd>
+            <dd className="font-semibold">{formatRupiah(preview.shippingCost)}</dd>
           </div>
           <div className="flex justify-between border-t border-black/10 pt-3 text-lg">
             <dt>Total</dt>
-            <dd className="font-semibold">{formatRupiah(total)}</dd>
+            <dd className="font-semibold">{formatRupiah(preview.total)}</dd>
           </div>
         </dl>
 
@@ -202,18 +213,16 @@ function CheckoutContent() {
 
         <Button
           onClick={handlePlaceOrder}
-          // Disabled ditambahkan logika blocked
           disabled={addressId === null || blocked || placeOrder.isPending}
           className="mt-6 w-full"
         >
           {placeOrder.isPending ? "Memproses..." : "Buat Pesanan"}
         </Button>
 
-        {/* Peringatan stok/ketersediaan baru ditambahkan di sini */}
         {blocked && (
           <p className="mt-3 text-sm text-sale">
-            Ada produk yang tidak tersedia atau stoknya kurang. Kembali ke keranjang
-            untuk memperbaikinya.
+            Ada produk yang tidak tersedia atau stoknya kurang. Kembali ke
+            keranjang untuk memperbaikinya.
           </p>
         )}
 

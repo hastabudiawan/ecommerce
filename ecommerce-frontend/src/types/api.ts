@@ -1,3 +1,5 @@
+// ---------- Umum ----------
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -13,28 +15,7 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-export interface ProductImage {
-  id: number;
-  imageUrl: string;
-  isPrimary: boolean;
-}
-
-export interface Product {
-  id: number;
-  categoryId: number;
-  categoryName: string;
-  storeId: number | null;
-  storeName: string | null;
-  name: string;
-  slug: string;
-  description: string | null;
-  price: number;
-  stock: number;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  rejectionReason: string | null;
-  images: ProductImage[];
-  createdAt: string;
-}
+// ---------- Autentikasi dan akun ----------
 
 export type UserRole = "ADMIN" | "CUSTOMER" | "SELLER";
 
@@ -61,11 +42,111 @@ export interface RegisterRequest {
   phone?: string;
 }
 
+export interface Account {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  hasStore: boolean;
+  createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+  name: string;
+  phone?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// ---------- Admin: manajemen pengguna ----------
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  enabled: boolean;
+  hasStore: boolean;
+  createdAt: string;
+}
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role: UserRole;
+}
+
+// ---------- Produk dan kategori ----------
+
+export interface ProductImage {
+  id: number;
+  imageUrl: string;
+  isPrimary: boolean;
+}
+
+export interface Product {
+  id: number;
+  categoryId: number;
+  categoryName: string;
+  storeId: number | null;
+  storeName: string | null;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  stock: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionReason: string | null;
+  images: ProductImage[];
+  createdAt: string;
+}
+
+export interface ProductRequest {
+  categoryId: number;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+}
+
 export interface Category {
   id: number;
   name: string;
   slug: string;
 }
+
+// ---------- Toko ----------
+
+export interface SellerStore {
+  id: number;
+  storeName: string;
+  slug: string;
+  description: string | null;
+  city: string | null;
+  shippingFee: number;
+}
+
+export interface CreateStoreRequest {
+  storeName: string;
+  description?: string;
+  city?: string;
+}
+
+export interface UpdateStoreRequest {
+  storeName: string;
+  city?: string;
+  description?: string;
+  shippingFee: number;
+}
+
+// ---------- Keranjang ----------
 
 export interface CartItemDto {
   id: number;
@@ -81,6 +162,7 @@ export interface CartItemDto {
   stock: number;
   available: boolean;
 }
+
 export interface CartDto {
   id: number | null;
   items: CartItemDto[];
@@ -92,6 +174,8 @@ export interface AddCartItemRequest {
   productId: number;
   quantity: number;
 }
+
+// ---------- Alamat ----------
 
 export interface Address {
   id: number;
@@ -114,12 +198,27 @@ export interface CreateAddressRequest {
   isDefault: boolean;
 }
 
-export type OrderStatus =
-  | "PENDING"
-  | "PAID"
-  | "SHIPPED"
-  | "COMPLETED"
-  | "CANCELLED";
+// ---------- Checkout dan pesanan ----------
+
+export interface CheckoutRequest {
+  addressId: number;
+}
+
+export interface StorePreview {
+  storeId: number | null;
+  storeName: string;
+  subtotal: number;
+  shippingCost: number;
+}
+
+export interface CheckoutPreview {
+  stores: StorePreview[];
+  subtotal: number;
+  shippingCost: number;
+  total: number;
+}
+
+export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
 
 export interface OrderItem {
   productId: number;
@@ -156,37 +255,7 @@ export interface OrderGroup {
   createdAt: string;
 }
 
-export interface StoreShippingCost {
-  storeId: number | null; // null = produk platform
-  shippingCost: number;
-}
-
-export interface CheckoutRequest {
-  addressId: number;
-  shippingCosts: StoreShippingCost[];
-}
-
-export interface SellerStore {
-  id: number;
-  storeName: string;
-  slug: string;
-  description: string | null;
-  city: string | null;
-}
-
-export interface CreateStoreRequest {
-  storeName: string;
-  description?: string;
-  city?: string;
-}
-
-export interface ProductRequest {
-  categoryId: number;
-  name: string;
-  description?: string;
-  price: number;
-  stock: number;
-}
+// ---------- Settlement ----------
 
 export type SettlementStatus = "PENDING" | "RELEASED";
 
@@ -199,38 +268,8 @@ export interface Settlement {
   createdAt: string;
   releasedAt: string | null;
 }
+
 export interface SettlementSummary {
   totalPending: number;
   totalReleased: number;
-}
-
-export interface AdminUser {
-  id: number;
-  name: string;
-  email: string;
-  phone: string | null;
-  role: UserRole;
-  enabled: boolean;
-  hasStore: boolean;
-  createdAt: string;
-}
-
-export interface Account {
-  id: number;
-  name: string;
-  email: string;
-  phone: string | null;
-  role: UserRole;
-  hasStore: boolean;
-  createdAt: string;
-}
-
-export interface UpdateProfileRequest {
-  name: string;
-  phone?: string;
-}
-
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
 }

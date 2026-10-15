@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin } from "lucide-react";
+import { MapPin, Truck } from "lucide-react";
+import { StoreEditForm } from "@/components/seller/StoreEditForm";
 import { StoreForm } from "@/components/seller/StoreForm";
+import { Button } from "@/components/ui/Button";
+import { formatRupiah } from "@/lib/utils";
 import { createStore, getMyStore } from "@/services/store.service";
 import type { SellerStore } from "@/types/api";
 
 export default function SellerStorePage() {
   const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
 
   const { data: store, isLoading, isError } = useQuery({
     queryKey: ["seller-store"],
@@ -24,7 +29,7 @@ export default function SellerStorePage() {
     return <p className="text-sm text-sale">Gagal memuat data toko.</p>;
   }
 
-  if (store === null) {
+  if (store === null || store === undefined) {
     return (
       <div className="max-w-xl">
         <h1 className="font-display text-2xl md:text-3xl">BUAT TOKO</h1>
@@ -43,27 +48,53 @@ export default function SellerStorePage() {
     );
   }
 
+  function handleSaved(updated: SellerStore) {
+    queryClient.setQueryData(["seller-store"], updated);
+    setEditing(false);
+  }
+
   return (
     <div>
       <h1 className="font-display text-2xl md:text-3xl">TOKO SAYA</h1>
 
       <div className="mt-6 max-w-xl rounded-2xl border border-black/10 p-6">
-        <h2 className="text-xl font-semibold">{store?.storeName}</h2>
-        {store?.city && (
-          <p className="mt-2 flex items-center gap-2 text-sm text-black/60">
-            <MapPin size={16} />
-            {store.city}
-          </p>
-        )}
-        {store?.description && <p className="mt-4 text-black/60">{store.description}</p>}
-        <p className="mt-4 text-xs text-black/40">Slug: {store?.slug}</p>
+        {editing ? (
+          <StoreEditForm
+            store={store}
+            onSaved={handleSaved}
+            onCancel={() => setEditing(false)}
+          />
+        ) : (
+          <>
+            <h2 className="text-xl font-semibold">{store.storeName}</h2>
+            {store.city && (
+              <p className="mt-2 flex items-center gap-2 text-sm text-black/60">
+                <MapPin size={16} />
+                {store.city}
+              </p>
+            )}
+            <p className="mt-2 flex items-center gap-2 text-sm text-black/60">
+              <Truck size={16} />
+              Ongkos kirim {formatRupiah(store.shippingFee)} per pesanan
+            </p>
+            {store.description && (
+              <p className="mt-4 text-black/60">{store.description}</p>
+            )}
+            <p className="mt-4 text-xs text-black/40">Slug: {store.slug}</p>
 
-        <Link
-          href="/seller/products"
-          className="mt-6 inline-block rounded-full bg-ink px-8 py-4 text-sm font-medium text-white hover:opacity-90"
-        >
-          Kelola Produk
-        </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button className="px-8 py-4" onClick={() => setEditing(true)}>
+                Edit Toko
+              </Button>
+              <Link
+                href="/seller/products"
+                className="rounded-full border border-black/20 px-8 py-4 text-sm font-medium hover:bg-surface"
+              >
+                Kelola Produk
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

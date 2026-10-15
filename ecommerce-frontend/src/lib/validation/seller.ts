@@ -26,3 +26,17 @@ export const productSchema = z.object({
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
+
+export const storeEditSchema = z.object({
+  storeName: z.string().min(1, "Nama toko wajib diisi").max(150, "Maksimal 150 karakter"),
+  city: z.string().max(100, "Maksimal 100 karakter").optional(),
+  description: z.string().optional(),
+  // Disimpan sebagai teks di form dan diubah ke angka saat submit (alasan sama dengan form produk)
+  shippingFee: z
+    .string()
+    .min(1, "Ongkos kirim wajib diisi")
+    .regex(/^\d+$/, "Ongkos kirim harus berupa angka bulat")
+    .refine((value) => Number(value) <= 1_000_000, "Maksimal Rp 1.000.000"),
+});
+
+export type StoreEditFormValues = z.infer<typeof storeEditSchema>;
