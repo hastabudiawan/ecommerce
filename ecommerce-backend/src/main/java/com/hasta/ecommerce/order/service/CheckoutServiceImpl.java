@@ -7,10 +7,10 @@ import com.hasta.ecommerce.common.exception.BadRequestException;
 import com.hasta.ecommerce.common.exception.InsufficientStockException;
 import com.hasta.ecommerce.common.exception.ResourceNotFoundException;
 import com.hasta.ecommerce.common.util.OrderNumberGenerator;
+import com.hasta.ecommerce.order.dto.CheckoutPreviewDto;
 import com.hasta.ecommerce.order.dto.CheckoutRequest;
 import com.hasta.ecommerce.order.dto.OrderGroupDto;
 import com.hasta.ecommerce.order.dto.OrderMapper;
-import com.hasta.ecommerce.order.dto.StoreShippingCost;
 import com.hasta.ecommerce.order.entity.Order;
 import com.hasta.ecommerce.order.entity.OrderGroup;
 import com.hasta.ecommerce.order.entity.OrderItem;
@@ -20,11 +20,11 @@ import com.hasta.ecommerce.product.entity.Product;
 import com.hasta.ecommerce.product.entity.ProductStatus;
 import com.hasta.ecommerce.product.repository.ProductRepository;
 import com.hasta.ecommerce.store.entity.Store;
-import com.hasta.ecommerce.store.repository.StoreRepository;
 import com.hasta.ecommerce.user.entity.Address;
 import com.hasta.ecommerce.user.entity.User;
 import com.hasta.ecommerce.user.repository.AddressRepository;
 import com.hasta.ecommerce.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,20 +45,52 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final OrderGroupRepository orderGroupRepository;
-    private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
+    private final BigDecimal platformShippingFee;
 
     public CheckoutServiceImpl(CartRepository cartRepository, AddressRepository addressRepository,
                                 UserRepository userRepository, OrderRepository orderRepository,
-                                OrderGroupRepository orderGroupRepository, StoreRepository storeRepository,
-                                ProductRepository productRepository) {
+                                OrderGroupRepository orderGroupRepository,
+                                ProductRepository productRepository,
+                                @Value("${app.shipping.platform-fee:15000}") BigDecimal platformShippingFee) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.orderGroupRepository = orderGroupRepository;
-        this.storeRepository = storeRepository;
         this.productRepository = productRepository;
+        this.platformShippingFee = platformShippingFee;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CheckoutPreviewDto preview(Long userId) {
+        Cart cart = cartRepository.findByUserIdWithItems(userId).orElse(null);
+
+        if (cart == null || cart.getItems().isEmpty()) {
+            return new CheckoutPreviewDto(List.of(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        List<CheckoutPreviewDto.StorePreview> stores = new ArrayList<>();
+        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal shipping = BigDecimal.ZERO;
+
+        for (List<CartItem> items : groupByStore(cart).values()) {
+            Store store = storeOf(items);
+            BigDecimal storeSubtotal = sumSubtotal(items);
+            BigDecimal storeShipping = shippingFor(items);
+
+            stores.add(new CheckoutPreviewDto.StorePreview(
+                    store != null ? store.getId() : null,
+                    store != null ? store.getStoreName() : "Platform",
+                    storeSubtotal,
+                    storeShipping));
+
+            subtotal = subtotal.add(storeSubtotal);
+            shipping = shipping.add(storeShipping);
+        }
+
+        return new CheckoutPreviewDto(stores, subtotal, shipping, subtotal.add(shipping));
     }
 
     @Override
@@ -86,7 +118,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         User user = userRepository.findByIdOrThrow(userId);
 
         // LANGKAH 1: Validasi SEMUA item dulu, sebelum ada perubahan apa pun.
-        // Ini pemeriksaan awal supaya pesan errornya jelas; penjaga stok yang sebenarnya
+        // Pemeriksaan awal supaya pesan errornya jelas; penjaga stok yang sebenarnya
         // adalah update atomik di langkah 2.
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
@@ -102,11 +134,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
         }
 
-        // LANGKAH 2: Kurangi stok secara atomik. Dua checkout bersamaan untuk stok yang sama
-        // tidak mungkin sama-sama berhasil. Diurutkan menurut id produk supaya dua checkout
-        // dengan produk sama dalam urutan berbeda tidak saling mengunci (deadlock).
-        // Kalau ada yang gagal, exception membatalkan seluruh transaksi, termasuk
-        // pengurangan stok produk sebelumnya.
+        // LANGKAH 2: Kurangi stok secara atomik, berurutan menurut id produk (lihat Part 15).
         cart.getItems().stream()
                 .sorted(Comparator.comparing(item -> item.getProduct().getId()))
                 .forEach(item -> {
@@ -119,43 +147,15 @@ public class CheckoutServiceImpl implements CheckoutService {
                     }
                 });
 
-        // LANGKAH 3: Kelompokkan cart items berdasarkan toko.
-        // PLATFORM_KEY dipakai buat produk tanpa toko, karena groupingBy tidak boleh pakai null.
-        Map<Long, List<CartItem>> groupedByStore = cart.getItems().stream()
-                .collect(Collectors.groupingBy(item -> {
-                    Store store = item.getProduct().getStore();
-                    return store != null ? store.getId() : PLATFORM_KEY;
-                }, LinkedHashMap::new, Collectors.toList()));
-
-        // LANGKAH 4: Siapkan lookup shipping cost per toko dari request.
-        // storeId null dari client (representasi platform di sisi API) dipetakan ke PLATFORM_KEY juga.
-        Map<Long, BigDecimal> shippingLookup = new HashMap<>();
-        if (request.shippingCosts() != null) {
-            for (StoreShippingCost sc : request.shippingCosts()) {
-                Long key = sc.storeId() != null ? sc.storeId() : PLATFORM_KEY;
-                shippingLookup.put(key, sc.shippingCost());
-            }
-        }
-
-        // LANGKAH 5: Buat 1 Order per toko
+        // LANGKAH 3: Buat 1 Order per toko. Ongkir ditentukan server, bukan dari request.
         List<Order> createdOrders = new ArrayList<>();
         BigDecimal groupSubtotal = BigDecimal.ZERO;
         BigDecimal groupShippingCost = BigDecimal.ZERO;
 
-        for (Map.Entry<Long, List<CartItem>> entry : groupedByStore.entrySet()) {
-            Long storeId = entry.getKey();
-            List<CartItem> items = entry.getValue();
-
-            // PLATFORM_KEY berarti tidak ada toko sungguhan - store tetap null di Order
-            Store store = storeId.equals(PLATFORM_KEY)
-                    ? null
-                    : storeRepository.findById(storeId).orElse(null);
-
-            BigDecimal storeSubtotal = items.stream()
-                    .map(i -> i.getPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            BigDecimal storeShippingCost = shippingLookup.getOrDefault(storeId, BigDecimal.ZERO);
+        for (List<CartItem> items : groupByStore(cart).values()) {
+            Store store = storeOf(items);
+            BigDecimal storeSubtotal = sumSubtotal(items);
+            BigDecimal storeShippingCost = shippingFor(items);
             BigDecimal storeTotal = storeSubtotal.add(storeShippingCost);
 
             Order order = new Order(user, address, OrderNumberGenerator.generate(),
@@ -167,11 +167,10 @@ public class CheckoutServiceImpl implements CheckoutService {
                 BigDecimal itemSubtotal = cartItem.getPriceSnapshot()
                         .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
-                OrderItem orderItem = new OrderItem(
+                order.addItem(new OrderItem(
                         product, product.getName(), cartItem.getPriceSnapshot(),
                         cartItem.getQuantity(), itemSubtotal
-                );
-                order.addItem(orderItem);
+                ));
             }
 
             createdOrders.add(order);
@@ -181,7 +180,7 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         BigDecimal groupTotal = groupSubtotal.add(groupShippingCost);
 
-        // LANGKAH 6: Buat OrderGroup, lalu simpan, baru kaitkan tiap Order ke group ini
+        // LANGKAH 4: Buat OrderGroup, lalu simpan, baru kaitkan tiap Order ke group ini
         OrderGroup orderGroup = new OrderGroup(user, address, OrderNumberGenerator.generateGroupNumber(),
                 groupSubtotal, groupShippingCost, groupTotal);
         OrderGroup savedGroup = orderGroupRepository.save(orderGroup);
@@ -191,9 +190,35 @@ public class CheckoutServiceImpl implements CheckoutService {
             orderRepository.save(order);
         }
 
-        // LANGKAH 7: Kosongkan cart
+        // LANGKAH 5: Kosongkan cart
         cart.getItems().clear();
 
         return OrderMapper.toGroupDto(savedGroup, createdOrders);
+    }
+
+    // Kelompokkan item keranjang per toko. Urutan kemunculan dipertahankan (LinkedHashMap).
+    private Map<Long, List<CartItem>> groupByStore(Cart cart) {
+        return cart.getItems().stream()
+                .collect(Collectors.groupingBy(item -> {
+                    Store store = item.getProduct().getStore();
+                    return store != null ? store.getId() : PLATFORM_KEY;
+                }, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    // Semua item dalam satu kelompok berasal dari toko yang sama (atau sama-sama platform)
+    private Store storeOf(List<CartItem> items) {
+        return items.get(0).getProduct().getStore();
+    }
+
+    private BigDecimal sumSubtotal(List<CartItem> items) {
+        return items.stream()
+                .map(i -> i.getPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Satu-satunya tempat aturan ongkir: tarif toko, atau tarif platform untuk produk tanpa toko.
+    private BigDecimal shippingFor(List<CartItem> items) {
+        Store store = storeOf(items);
+        return store != null ? store.getShippingFee() : platformShippingFee;
     }
 }

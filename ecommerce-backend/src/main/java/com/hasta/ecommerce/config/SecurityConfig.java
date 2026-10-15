@@ -75,11 +75,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/open-store").hasRole("CUSTOMER")   // baru
+                        .requestMatchers(HttpMethod.POST, "/api/auth/open-store").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/seller/**").hasRole("SELLER")
                         .requestMatchers(HttpMethod.POST, "/api/products/seller").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN") 
+                        .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/approve").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/reject").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/*/images").hasAnyRole("ADMIN", "SELLER")
@@ -91,18 +91,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/seller/store").hasRole("SELLER")
                         .requestMatchers(HttpMethod.GET, "/api/seller/store").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.PUT, "/api/seller/store").hasRole("SELLER")   // <-- DITAMBAHKAN DI SINI
                         .requestMatchers(HttpMethod.GET, "/api/stores/**").permitAll()
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers("/api/addresses/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/seller").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/orders/admin").hasRole("ADMIN") 
+                        .requestMatchers(HttpMethod.GET, "/api/orders/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/seller/*/status").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/seller/settlements/**").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/settlements").hasRole("ADMIN") 
+                        .requestMatchers(HttpMethod.GET, "/api/admin/settlements").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/admin/settlements/*/release").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")                          // baru
+                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

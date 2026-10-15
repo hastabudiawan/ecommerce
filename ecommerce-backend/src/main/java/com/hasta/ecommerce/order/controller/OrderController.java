@@ -2,6 +2,7 @@ package com.hasta.ecommerce.order.controller;
 
 import com.hasta.ecommerce.common.response.ApiResponse;
 import com.hasta.ecommerce.common.response.PageResponse;
+import com.hasta.ecommerce.order.dto.CheckoutPreviewDto;
 import com.hasta.ecommerce.order.dto.CheckoutRequest;
 import com.hasta.ecommerce.order.dto.OrderDto;
 import com.hasta.ecommerce.order.dto.OrderGroupDto;
@@ -103,5 +104,11 @@ public class OrderController {
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 "Pesanan dikonfirmasi diterima", orderService.confirmByCustomer(userId, orderId)));
+    }
+
+    @GetMapping("/preview")
+    public ResponseEntity<ApiResponse<CheckoutPreviewDto>> preview() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(checkoutService.preview(userId)));
     }
 }
