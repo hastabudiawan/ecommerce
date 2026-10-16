@@ -102,7 +102,7 @@ export interface Product {
   description: string | null;
   price: number;
   stock: number;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED"; // Status ARCHIVED ditambahkan di sini
   rejectionReason: string | null;
   images: ProductImage[];
   createdAt: string;

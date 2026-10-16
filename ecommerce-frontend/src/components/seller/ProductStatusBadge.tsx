@@ -5,6 +5,7 @@ const STATUS: Record<Product["status"], { label: string; className: string }> = 
   PENDING: { label: "Menunggu review", className: "bg-star/20 text-black" },
   APPROVED: { label: "Disetujui", className: "bg-success/15 text-success" },
   REJECTED: { label: "Ditolak", className: "bg-sale-bg text-sale" },
+  ARCHIVED: { label: "Diarsipkan", className: "bg-surface text-black/60" },
 };
 
 export function ProductStatusBadge({ status }: { status: Product["status"] }) {

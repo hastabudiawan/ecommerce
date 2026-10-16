@@ -33,11 +33,29 @@ export async function getProductById(id: number) {
   return res.data.data;
 }
 
-export async function getMyProducts({ page, size }: { page: number; size: number }) {
+export async function getMyProducts({
+  page,
+  size,
+  archived,
+}: {
+  page: number;
+  size: number;
+  archived: boolean;
+}) {
   const res = await api.get<ApiResponse<PageResponse<Product>>>(
     "/products/seller/my-products",
-    { params: { page, size } },
+    { params: { page, size, archived } },
   );
+  return res.data.data;
+}
+
+export async function archiveProduct(id: number) {
+  const res = await api.put<ApiResponse<Product>>(`/products/seller/${id}/archive`);
+  return res.data.data;
+}
+
+export async function restoreProduct(id: number) {
+  const res = await api.put<ApiResponse<Product>>(`/products/seller/${id}/restore`);
   return res.data.data;
 }
 
@@ -73,6 +91,19 @@ export async function uploadProductImage({
   const res = await api.post<ApiResponse<ProductImage>>(
     `/products/${productId}/images`,
     form,
+  );
+  return res.data.data;
+}
+
+export async function setPrimaryImage({
+  productId,
+  imageId,
+}: {
+  productId: number;
+  imageId: number;
+}) {
+  const res = await api.put<ApiResponse<ProductImage>>(
+    `/products/${productId}/images/${imageId}/primary`,
   );
   return res.data.data;
 }

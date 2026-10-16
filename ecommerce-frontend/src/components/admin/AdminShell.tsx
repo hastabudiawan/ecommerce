@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, PackageCheck, Users, Wallet } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Container } from "@/components/ui/Container";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/api";
+import { ClipboardList, PackageCheck, Tags, Users, Wallet } from "lucide-react";
 
 const ADMIN_ONLY: UserRole[] = ["ADMIN"];
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/admin/orders", label: "Pesanan", icon: ClipboardList, exact: false },
   { href: "/admin/settlements", label: "Settlement", icon: Wallet, exact: false },
   { href: "/admin/users", label: "Pengguna", icon: Users, exact: false },
+  { href: "/admin/categories", label: "Kategori", icon: Tags, exact: false },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

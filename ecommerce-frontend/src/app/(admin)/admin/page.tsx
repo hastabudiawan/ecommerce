@@ -21,6 +21,7 @@ const TABS = [
   { value: "APPROVED", label: "Disetujui" },
   { value: "REJECTED", label: "Ditolak" },
   { value: "ALL", label: "Semua" },
+  { value: "ARCHIVED", label: "Diarsipkan" },
 ];
 
 export default function AdminProductsPage() {

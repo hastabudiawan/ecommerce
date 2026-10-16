@@ -84,6 +84,13 @@ export function ProductReviewCard({
         </p>
       )}
 
+      {/* Keterangan untuk produk yang diarsipkan */}
+      {product.status === "ARCHIVED" && (
+        <p className="mt-3 text-sm text-black/50">
+          Diarsipkan oleh penjual. Tidak ada tindakan yang bisa dilakukan admin.
+        </p>
+      )}
+
       {rejecting ? (
         <div className="mt-4 space-y-3">
           <TextArea
@@ -110,12 +117,12 @@ export function ProductReviewCard({
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          {product.status !== "APPROVED" && (
+          {product.status !== "APPROVED" && product.status !== "ARCHIVED" && (
             <Button className="px-6 py-3" disabled={busy} onClick={onApprove}>
               Setujui
             </Button>
           )}
-          {product.status !== "REJECTED" && (
+          {product.status !== "REJECTED" && product.status !== "ARCHIVED" && (
             <Button
               variant="outline"
               className="px-6 py-3"

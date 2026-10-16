@@ -12,6 +12,7 @@ import { formatRupiah } from "@/lib/utils";
 import { addCartItem } from "@/services/cart.service";
 import { getProductBySlug, getProducts } from "@/services/product.service";
 import { useAuthStore } from "@/store/auth.store";
+import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -70,6 +71,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }
 
   const outOfStock = product.stock <= 0;
+  const notPublished = product.status !== "APPROVED";
   const relatedProducts = (related?.content ?? [])
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
@@ -85,14 +87,26 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <ProductGallery images={product.images} />
 
           <div>
-            <h1 className="font-display text-2xl md:text-3xl">{product.name}</h1>
-
+            <h1 className="font-display text-2xl md:text-3xl">
+              {product.name}
+            </h1>
+            {notPublished && (
+              <div className="mt-3 flex items-start gap-3 rounded-lg bg-surface px-4 py-3 text-sm text-black/70">
+                <ProductStatusBadge status={product.status} />
+                <p>
+                  Produk ini belum tampil di katalog. Halaman ini hanya bisa
+                  dilihat oleh pemilik toko dan admin.
+                </p>
+              </div>
+            )}
             <p className="mt-3 flex items-center gap-2 text-sm text-black/50">
               <Store size={16} />
               Dijual oleh {product.storeName ?? "Platform"}
             </p>
 
-            <p className="mt-4 text-2xl font-semibold">{formatRupiah(product.price)}</p>
+            <p className="mt-4 text-2xl font-semibold">
+              {formatRupiah(product.price)}
+            </p>
 
             {product.description && (
               <p className="mt-4 text-black/60">{product.description}</p>
@@ -113,7 +127,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </button>
                 <span className="w-8 text-center text-sm">{quantity}</span>
                 <button
-                  onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+                  onClick={() =>
+                    setQuantity((q) => Math.min(product.stock, q + 1))
+                  }
                   className="p-3"
                   aria-label="Tambah"
                 >
@@ -123,18 +139,22 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               <Button
                 onClick={handleAddToCart}
-                disabled={outOfStock || addToCart.isPending}
+                disabled={outOfStock || notPublished || addToCart.isPending}
                 className="flex-1"
               >
-                {outOfStock
-                  ? "Stok Habis"
-                  : addToCart.isPending
-                    ? "Menambahkan..."
-                    : "Add to Cart"}
+                {notPublished
+                  ? "Belum Tersedia"
+                  : outOfStock
+                    ? "Stok Habis"
+                    : addToCart.isPending
+                      ? "Menambahkan..."
+                      : "Add to Cart"}
               </Button>
             </div>
 
-            {feedback && <p className="mt-3 text-sm text-black/60">{feedback}</p>}
+            {feedback && (
+              <p className="mt-3 text-sm text-black/60">{feedback}</p>
+            )}
           </div>
         </div>
       </Container>

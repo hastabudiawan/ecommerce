@@ -2,22 +2,30 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ImageOff, Plus } from "lucide-react";
+import { StatusTabs } from "@/components/admin/StatusTabs";
 import { Pagination } from "@/components/product/Pagination";
 import { NeedStore } from "@/components/seller/NeedStore";
 import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
+import { useListParams } from "@/hooks/useListParams";
 import { formatRupiah } from "@/lib/utils";
 import { getMyProducts } from "@/services/product.service";
 import { getMyStore } from "@/services/store.service";
 
 const PAGE_SIZE = 10;
 
+const TABS = [
+  { value: "ACTIVE", label: "Aktif" },
+  { value: "ARCHIVED", label: "Diarsipkan" },
+];
+
 export default function SellerProductsPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const page = Number(searchParams.get("page") ?? "1");
+  const { status, page, setStatus, setPage } = useListParams(
+    "ACTIVE",
+    TABS.map((tab) => tab.value),
+  );
+  const archived = status === "ARCHIVED";
 
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["seller-store"],
@@ -28,8 +36,8 @@ export default function SellerProductsPage() {
   // Status review bisa berubah di luar halaman ini (admin approve/reject),
   // jadi selalu ambil ulang saat halaman dibuka.
   const { data, isLoading } = useQuery({
-    queryKey: ["seller-products", page],
-    queryFn: () => getMyProducts({ page: page - 1, size: PAGE_SIZE }),
+    queryKey: ["seller-products", archived, page],
+    queryFn: () => getMyProducts({ page: page - 1, size: PAGE_SIZE, archived }),
     enabled: !!store,
     staleTime: 0,
   });
@@ -54,11 +62,19 @@ export default function SellerProductsPage() {
         </Link>
       </div>
 
+      <div className="mt-6">
+        <StatusTabs options={TABS} value={status} onChange={setStatus} />
+      </div>
+
       {isLoading && <p className="mt-6 text-sm text-black/50">Memuat produk...</p>}
 
       {data && data.content.length === 0 && (
         <div className="mt-6 rounded-2xl border border-black/10 p-10 text-center">
-          <p className="text-black/60">Belum ada produk. Tambahkan produk pertamamu.</p>
+          <p className="text-black/60">
+            {archived
+              ? "Tidak ada produk yang diarsipkan."
+              : "Belum ada produk. Tambahkan produk pertamamu."}
+          </p>
         </div>
       )}
 
@@ -108,11 +124,7 @@ export default function SellerProductsPage() {
       </div>
 
       {data && (
-        <Pagination
-          page={page}
-          totalPages={data.totalPages}
-          onChange={(next) => router.push(`/seller/products?page=${next}`)}
-        />
+        <Pagination page={page} totalPages={data.totalPages} onChange={setPage} />
       )}
     </div>
   );
