@@ -26,7 +26,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByStoreIdAndStatus(Long storeId, ProductStatus status, Pageable pageable);
 
-    Page<Product> findByStoreId(Long storeId, Pageable pageable); // buat seller lihat SEMUA produknya (termasuk pending/rejected)
+    Page<Product> findByStoreId(Long storeId, Pageable pageable); // buat seller lihat SEMUA produknya (termasuk
+                                                                  // pending/rejected)
 
     Page<Product> findByCategoryIdAndStatus(Long categoryId, ProductStatus status, Pageable pageable);
 
@@ -35,8 +36,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             Pageable pageable);
 
     // ===== Update Stok Atomik =====
-    
-    // Mengurangi stok hanya kalau stok cukup. Mengembalikan jumlah baris yang berubah:
+
+    // Mengurangi stok hanya kalau stok cukup. Mengembalikan jumlah baris yang
+    // berubah:
     // 1 berarti berhasil, 0 berarti stok tidak cukup.
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock - :qty WHERE p.id = :id AND p.stock >= :qty")
@@ -45,4 +47,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id = :id")
     int increaseStock(@Param("id") Long id, @Param("qty") int qty);
+
+    Page<Product> findByStoreIdAndStatusNot(Long storeId, ProductStatus status, Pageable pageable);
+
+    long countByCategoryId(Long categoryId);
+
 }

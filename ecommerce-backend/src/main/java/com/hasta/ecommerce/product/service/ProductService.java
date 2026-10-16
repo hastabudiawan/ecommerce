@@ -6,10 +6,10 @@ import com.hasta.ecommerce.product.dto.ProductImageDto;
 import com.hasta.ecommerce.product.dto.RejectProductRequest;
 import com.hasta.ecommerce.product.dto.UpdateProductRequest;
 import com.hasta.ecommerce.product.entity.ProductStatus;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
+
 public interface ProductService {
     ProductDto create(CreateProductRequest request);
     ProductDto getById(Long id);
@@ -19,13 +19,16 @@ public interface ProductService {
     void delete(Long id);
 
     ProductDto createAsSeller(Long sellerId, CreateProductRequest request);
-    Page<ProductDto> getMyProducts(Long sellerId, Pageable pageable);
+    Page<ProductDto> getMyProducts(Long sellerId, boolean archived, Pageable pageable);
+    ProductDto updateAsSeller(Long sellerId, Long productId, UpdateProductRequest request);
+    ProductDto archive(Long sellerId, Long productId);
+    ProductDto restore(Long sellerId, Long productId);
+
     ProductDto approve(Long productId);
     ProductDto reject(Long productId, RejectProductRequest request);
+    Page<ProductDto> getForAdmin(ProductStatus status, Pageable pageable);
+
     ProductImageDto addImage(Long userId, Long productId, MultipartFile file, boolean isPrimary);
     void removeImage(Long userId, Long productId, Long imageId);
-
-    ProductDto updateAsSeller(Long sellerId, Long productId, UpdateProductRequest request);
-
-    Page<ProductDto> getForAdmin(ProductStatus status, Pageable pageable);
+    ProductImageDto setPrimaryImage(Long userId, Long productId, Long imageId);
 }

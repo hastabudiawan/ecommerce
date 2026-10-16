@@ -96,12 +96,12 @@ public class ProductController {
 
     @GetMapping("/seller/my-products")
     public ResponseEntity<ApiResponse<PageResponse<ProductDto>>> getMyProducts(
+            @RequestParam(defaultValue = "false") boolean archived,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Long sellerId = SecurityUtils.getCurrentUserId();
-        // Pageable pageable = PageRequest.of(page, size);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<ProductDto> result = productService.getMyProducts(sellerId, pageable);
+        Page<ProductDto> result = productService.getMyProducts(sellerId, archived, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
 
@@ -156,5 +156,27 @@ public class ProductController {
 
         Page<ProductDto> result = productService.getForAdmin(status, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
+    }
+
+    @PutMapping("/seller/{id}/archive")
+    public ResponseEntity<ApiResponse<ProductDto>> archive(@PathVariable Long id) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Produk diarsipkan", productService.archive(sellerId, id)));
+    }
+
+    @PutMapping("/seller/{id}/restore")
+    public ResponseEntity<ApiResponse<ProductDto>> restore(@PathVariable Long id) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Produk diaktifkan kembali dan menunggu review", productService.restore(sellerId, id)));
+    }
+
+    @PutMapping("/{id}/images/{imageId}/primary")
+    public ResponseEntity<ApiResponse<ProductImageDto>> setPrimaryImage(
+            @PathVariable Long id, @PathVariable Long imageId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Gambar utama diperbarui", productService.setPrimaryImage(userId, id, imageId)));
     }
 }

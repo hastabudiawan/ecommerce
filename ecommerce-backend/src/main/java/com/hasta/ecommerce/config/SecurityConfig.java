@@ -79,19 +79,26 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/seller/**").hasRole("SELLER")
                         .requestMatchers(HttpMethod.POST, "/api/products/seller").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/archive").hasRole("SELLER") // baru
+                        .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/restore").hasRole("SELLER") // baru
                         .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/approve").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/reject").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/*/images").hasAnyRole("ADMIN", "SELLER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*/images/*").hasAnyRole("ADMIN", "SELLER")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/*/images/*/primary")
+                        .hasAnyRole("ADMIN", "SELLER") // baru
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN") // baru
+                        .requestMatchers(HttpMethod.PUT, "/api/categories/*").hasRole("ADMIN") // baru
+                        .requestMatchers(HttpMethod.DELETE, "/api/categories/*").hasRole("ADMIN") // baru
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/seller/store").hasRole("SELLER")
                         .requestMatchers(HttpMethod.GET, "/api/seller/store").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.PUT, "/api/seller/store").hasRole("SELLER")   // <-- DITAMBAHKAN DI SINI
+                        .requestMatchers(HttpMethod.PUT, "/api/seller/store").hasRole("SELLER")
                         .requestMatchers(HttpMethod.GET, "/api/stores/**").permitAll()
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers("/api/addresses/**").authenticated()
