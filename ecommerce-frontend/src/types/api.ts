@@ -83,7 +83,7 @@ export interface CreateUserRequest {
   role: UserRole;
 }
 
-// ---------- Produk dan kategori ----------
+// ---------- Produk, kategori, dan ulasan ----------
 
 export interface ProductImage {
   id: number;
@@ -101,10 +101,12 @@ export interface Product {
   slug: string;
   description: string | null;
   price: number;
-  discountPercent: number; // Tambahan baru
-  finalPrice: number;      // Tambahan baru
+  discountPercent: number; 
+  finalPrice: number;      
   stock: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED"; // Status ARCHIVED ditambahkan di sini
+  ratingAverage: number;   // Tambahan baru
+  reviewCount: number;     // Tambahan baru
+  status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED"; 
   rejectionReason: string | null;
   images: ProductImage[];
   createdAt: string;
@@ -115,7 +117,7 @@ export interface ProductRequest {
   name: string;
   description?: string;
   price: number;
-  discountPercent?: number; // Tambahan baru
+  discountPercent?: number; 
   stock: number;
 }
 
@@ -123,6 +125,25 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
+}
+
+export interface Review {
+  id: number;
+  rating: number;
+  comment: string | null;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface ReviewEligibility {
+  canReview: boolean;
+  reason: string | null;
+  myReview: Review | null;
+}
+
+export interface ReviewRequest {
+  rating: number;
+  comment?: string;
 }
 
 // ---------- Toko ----------

@@ -21,9 +21,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.store.seller.id = :sellerId")
     Page<Order> findByStoreSellerId(@Param("sellerId") Long sellerId, Pageable pageable);
-    
+
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     // Method baru ditambahkan di sini
     List<Order> findByStatusAndUpdatedAtBefore(OrderStatus status, LocalDateTime cutoff);
+
+    // Berapa kali user ini membeli produk tersebut dalam pesanan dengan status
+    // tertentu (di sini: Selesai)
+    @Query("""
+            SELECT COUNT(i) FROM Order o JOIN o.items i
+            WHERE o.user.id = :userId AND o.status = :status AND i.product.id = :productId
+            """)
+    long countPurchases(@Param("userId") Long userId,
+            @Param("productId") Long productId,
+            @Param("status") OrderStatus status);
 }

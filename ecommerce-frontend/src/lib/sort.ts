@@ -23,6 +23,12 @@ export const SORT_OPTIONS = [
     sortBy: "name",
     direction: "asc" as const,
   },
+  {
+    value: "rating",
+    label: "Rating Tertinggi",
+    sortBy: "ratingAverage",
+    direction: "desc" as const,
+  },
 ];
 
 export function resolveSort(value: string) {

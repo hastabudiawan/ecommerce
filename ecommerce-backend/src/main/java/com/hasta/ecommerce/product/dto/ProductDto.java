@@ -17,6 +17,8 @@ public record ProductDto(
         int discountPercent,
         BigDecimal finalPrice,
         Integer stock,
+        BigDecimal ratingAverage,
+        int reviewCount,
         String status,
         String rejectionReason,
         List<ProductImageDto> images,

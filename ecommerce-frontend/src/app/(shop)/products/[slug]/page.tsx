@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductSection } from "@/components/product/ProductSection";
-import { formatRupiah } from "@/lib/utils";
+//import { formatRupiah } from "@/lib/utils";
 import { addCartItem } from "@/services/cart.service";
 import { getProductBySlug, getProducts } from "@/services/product.service";
 import { useAuthStore } from "@/store/auth.store";
 import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
 import { PriceTag } from "@/components/product/PriceTag";
+import { StarRating } from "@/components/product/StarRating";
+import { ReviewSection } from "@/components/review/ReviewSection";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -100,6 +102,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </p>
               </div>
             )}
+
+            {/* Menampilkan ringkasan rating ulasan */}
+            {product.reviewCount > 0 && (
+              <a href="#ulasan" className="mt-2 flex items-center gap-2">
+                <StarRating value={product.ratingAverage} />
+                <span className="text-sm text-black/60">
+                  {product.ratingAverage.toFixed(1)}/5 ({product.reviewCount} ulasan)
+                </span>
+              </a>
+            )}
+
             <p className="mt-3 flex items-center gap-2 text-sm text-black/50">
               <Store size={16} />
               Dijual oleh {product.storeName ?? "Platform"}
@@ -156,6 +169,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             )}
           </div>
         </div>
+
+        {/* Memanggil komponen ReviewSection */}
+        <ReviewSection product={product} />
       </Container>
 
       <ProductSection title="You Might Also Like" products={relatedProducts} />

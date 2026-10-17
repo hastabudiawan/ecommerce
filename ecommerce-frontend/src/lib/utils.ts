@@ -34,3 +34,7 @@ export function formatDate(value: string) {
     timeStyle: "short",
   }).format(new Date(value));
 }
+
+export function formatDay(value: string) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(value));
+}

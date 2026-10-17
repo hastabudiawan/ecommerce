@@ -8,7 +8,8 @@ import java.util.stream.Collectors;
 
 public class ProductMapper {
 
-    private ProductMapper() {}
+    private ProductMapper() {
+    }
 
     public static ProductDto toDto(Product product) {
         List<ProductImageDto> images = product.getImages().stream()
@@ -31,11 +32,12 @@ public class ProductMapper {
                 product.getDiscountPercent(),
                 product.getFinalPrice(),
                 product.getStock(),
+                product.getRatingAverage(),
+                product.getReviewCount(),
                 product.getStatus().name(),
                 product.getRejectionReason(),
                 images,
-                product.getCreatedAt()
-        );
+                product.getCreatedAt());
     }
 
     private static ProductImageDto toImageDto(ProductImage image) {

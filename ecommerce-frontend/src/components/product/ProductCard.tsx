@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
 import { PriceTag } from "@/components/product/PriceTag";
+import { StarRating } from "@/components/product/StarRating";
 import type { Product } from "@/types/api";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -26,6 +27,16 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
       <h3 className="mt-4 line-clamp-1 text-base font-medium">{product.name}</h3>
+
+      {product.reviewCount > 0 && (
+        <div className="mt-1 flex items-center gap-2">
+          <StarRating value={product.ratingAverage} size={14} />
+          <span className="text-xs text-black/60">
+            {product.ratingAverage.toFixed(1)}/5
+          </span>
+        </div>
+      )}
+
       <PriceTag product={product} className="mt-1" />
     </Link>
   );

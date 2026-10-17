@@ -39,6 +39,12 @@ public class Product {
     @Column(name = "final_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal finalPrice;
 
+    @Column(name = "rating_average", nullable = false, precision = 2, scale = 1)
+    private BigDecimal ratingAverage = BigDecimal.ZERO;
+
+    @Column(name = "review_count", nullable = false)
+    private int reviewCount = 0;
+
     @Column(nullable = false)
     private Integer stock;
 
@@ -73,7 +79,8 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stock = stock;
-        // Tidak perlu panggil recalculateFinalPrice() di constructor, karena otomatis akan dipanggil di onCreate() 
+        // Tidak perlu panggil recalculateFinalPrice() di constructor, karena otomatis
+        // akan dipanggil di onCreate()
     }
 
     public Product(Store store, Category category, String name, String slug, String description,
@@ -154,8 +161,8 @@ public class Product {
     }
 
     // Accessors baru
-    public int getDiscountPercent() { 
-        return discountPercent; 
+    public int getDiscountPercent() {
+        return discountPercent;
     }
 
     public void setDiscountPercent(int discountPercent) {
@@ -163,13 +170,15 @@ public class Product {
         recalculateFinalPrice();
     }
 
-    public BigDecimal getFinalPrice() { 
-        return finalPrice; 
+    public BigDecimal getFinalPrice() {
+        return finalPrice;
     }
 
-    // Dipanggil setiap harga atau diskon berubah, jadi finalPrice tidak pernah usang
+    // Dipanggil setiap harga atau diskon berubah, jadi finalPrice tidak pernah
+    // usang
     private void recalculateFinalPrice() {
-        if (price == null) return;
+        if (price == null)
+            return;
         this.finalPrice = price
                 .multiply(BigDecimal.valueOf(100L - discountPercent))
                 .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
@@ -217,5 +226,18 @@ public class Product {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public BigDecimal getRatingAverage() {
+        return ratingAverage;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public void updateRating(BigDecimal average, int count) {
+        this.ratingAverage = average;
+        this.reviewCount = count;
     }
 }
