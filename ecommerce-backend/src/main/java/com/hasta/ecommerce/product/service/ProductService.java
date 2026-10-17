@@ -14,7 +14,10 @@ public interface ProductService {
     ProductDto create(CreateProductRequest request);
     ProductDto getById(Long id);
     ProductDto getBySlug(String slug);
-    Page<ProductDto> getAll(Long categoryId, String keyword, Pageable pageable);
+    
+    // Signature getAll diperbarui dengan penambahan boolean onSale
+    Page<ProductDto> getAll(Long categoryId, String keyword, boolean onSale, Pageable pageable);
+    
     ProductDto update(Long id, UpdateProductRequest request);
     void delete(Long id);
 

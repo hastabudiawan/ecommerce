@@ -23,6 +23,10 @@ export const productSchema = z.object({
     .string()
     .min(1, "Stok wajib diisi")
     .regex(/^\d+$/, "Stok harus berupa angka bulat"),
+  discountPercent: z
+  .string()
+  .regex(/^\d*$/, "Diskon harus berupa angka bulat")
+  .refine((value) => value === "" || Number(value) <= 90, "Diskon maksimal 90%"),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

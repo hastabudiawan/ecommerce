@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextArea } from "@/components/ui/TextArea";
-import { cn } from "@/lib/utils";
+import { cn, formatRupiah } from "@/lib/utils";
 import { productSchema, type ProductFormValues } from "@/lib/validation/seller";
 import { getCategories } from "@/services/category.service";
 import type { Product, ProductRequest } from "@/types/api";
@@ -34,6 +34,7 @@ export function ProductForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -42,9 +43,22 @@ export function ProductForm({
       categoryId: initial ? String(initial.categoryId) : "",
       description: initial?.description ?? "",
       price: initial ? String(initial.price) : "",
+      discountPercent: String(initial?.discountPercent ?? 0),
       stock: initial ? String(initial.stock) : "",
     },
   });
+
+  // Pratinjau harga setelah diskon, hanya kalau harga dan diskon sama-sama valid
+  const priceValue = watch("price") ?? "";
+  const discountValue = watch("discountPercent") ?? "";
+  const discountNumber = Number(discountValue || "0");
+  const previewPrice =
+    /^\d+$/.test(priceValue) &&
+    /^\d*$/.test(discountValue) &&
+    discountNumber > 0 &&
+    discountNumber <= 90
+      ? Math.round((Number(priceValue) * (100 - discountNumber)) / 100)
+      : null;
 
   // Form baru dirender setelah kategori siap, supaya <select> sudah punya opsi
   // saat nilai awalnya dipasang (kalau tidak, kategori produk yang diedit tidak terpilih).
@@ -60,6 +74,7 @@ export function ProductForm({
           name: values.name.trim(),
           description: values.description?.trim() || undefined,
           price: Number(values.price),
+          discountPercent: Number(values.discountPercent || "0"),
           stock: Number(values.stock),
         }),
       )}
@@ -88,12 +103,18 @@ export function ProductForm({
         )}
       </label>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Field
-          label="Harga (Rp)"
+          label="Harga normal (Rp)"
           inputMode="numeric"
           {...register("price")}
           error={errors.price?.message}
+        />
+        <Field
+          label="Diskon (%)"
+          inputMode="numeric"
+          {...register("discountPercent")}
+          error={errors.discountPercent?.message}
         />
         <Field
           label="Stok"
@@ -102,6 +123,13 @@ export function ProductForm({
           error={errors.stock?.message}
         />
       </div>
+
+      {previewPrice !== null && (
+        <p className="text-sm text-black/60">
+          Harga setelah diskon:{" "}
+          <span className="font-semibold text-black">{formatRupiah(previewPrice)}</span>
+        </p>
+      )}
 
       <TextArea
         label="Deskripsi"

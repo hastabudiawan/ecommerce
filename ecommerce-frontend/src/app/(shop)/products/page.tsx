@@ -9,6 +9,7 @@ import { CategoryFilter } from "@/components/product/CategoryFilter";
 import { FilterDrawer } from "@/components/product/FilterDrawer";
 import { Pagination } from "@/components/product/Pagination";
 import { ProductCard } from "@/components/product/ProductCard";
+import { SaleToggle } from "@/components/product/SaleToggle";
 import { SortSelect } from "@/components/product/SortSelect";
 import { resolveSort } from "@/lib/sort";
 import { getCategories } from "@/services/category.service";
@@ -25,6 +26,7 @@ export default function ProductsPage() {
     ? Number(searchParams.get("categoryId"))
     : null;
   const keyword = searchParams.get("keyword") ?? "";
+  const onSale = searchParams.get("onSale") === "true";
   const page = Number(searchParams.get("page") ?? "1");
   const sortValue = searchParams.get("sort") ?? "newest";
   const sort = resolveSort(sortValue);
@@ -35,11 +37,12 @@ export default function ProductsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["products", { categoryId, keyword, page, sortValue }],
+    queryKey: ["products", { categoryId, keyword, onSale, page, sortValue }],
     queryFn: () =>
       getProducts({
         categoryId: categoryId ?? undefined,
         keyword: keyword || undefined,
+        onSale: onSale || undefined,
         page: page - 1,
         size: PAGE_SIZE,
         sortBy: sort.sortBy,
@@ -59,9 +62,14 @@ export default function ProductsPage() {
     router.push(`/products?${params.toString()}`);
   }
 
+  function toggleSale(checked: boolean) {
+    updateParams({ onSale: checked ? "true" : null, page: 1 });
+  }
+
   const activeCategoryName = categoryId
     ? categories?.find((c) => c.id === categoryId)?.name
     : null;
+  const heading = activeCategoryName ?? (onSale ? "On Sale" : "Semua Produk");
 
   const total = data?.totalElements ?? 0;
   const from = total === 0 ? 0 : page * PAGE_SIZE - PAGE_SIZE + 1;
@@ -69,9 +77,7 @@ export default function ProductsPage() {
 
   return (
     <Container className="py-10">
-      <p className="text-sm text-black/50">
-        Home {" > "} {activeCategoryName ?? "Semua Produk"}
-      </p>
+      <p className="text-sm text-black/50">Home {" > "} {heading}</p>
 
       <div className="mt-6 flex flex-col gap-10 md:flex-row">
         <aside className="hidden w-65 shrink-0 md:block">
@@ -79,14 +85,15 @@ export default function ProductsPage() {
             selectedId={categoryId}
             onSelect={(id) => updateParams({ categoryId: id, page: 1 })}
           />
+          <div className="mt-6">
+            <SaleToggle checked={onSale} onChange={toggleSale} />
+          </div>
         </aside>
 
         <div className="flex-1">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl md:text-3xl">
-                {activeCategoryName ?? "Semua Produk"}
-              </h1>
+              <h1 className="font-display text-2xl md:text-3xl">{heading}</h1>
               <p className="mt-1 text-sm text-black/50">
                 {total > 0
                   ? `Menampilkan ${from}-${to} dari ${total} Produk`
@@ -133,6 +140,8 @@ export default function ProductsPage() {
         onClose={() => setDrawerOpen(false)}
         selectedCategoryId={categoryId}
         onSelectCategory={(id) => updateParams({ categoryId: id, page: 1 })}
+        onSale={onSale}
+        onToggleSale={toggleSale}
       />
     </Container>
   );

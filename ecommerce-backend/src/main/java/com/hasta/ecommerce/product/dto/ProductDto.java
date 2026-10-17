@@ -14,6 +14,8 @@ public record ProductDto(
         String slug,
         String description,
         BigDecimal price,
+        int discountPercent,
+        BigDecimal finalPrice,
         Integer stock,
         String status,
         String rejectionReason,

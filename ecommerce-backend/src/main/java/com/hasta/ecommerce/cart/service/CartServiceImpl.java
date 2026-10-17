@@ -74,7 +74,8 @@ public class CartServiceImpl implements CartService {
         if (existingItem != null) {
             existingItem.setQuantity(newQuantity);
         } else {
-            CartItem newItem = new CartItem(cart, product, request.quantity(), product.getPrice());
+            // CartItem newItem = new CartItem(cart, product, request.quantity(), product.getPrice());
+            CartItem newItem = new CartItem(cart, product, request.quantity(), product.getFinalPrice());
             cartItemRepository.save(newItem);
             cart.getItems().add(newItem); // sinkronkan list in-memory juga
         }

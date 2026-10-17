@@ -21,6 +21,7 @@ import { getCart } from "@/services/cart.service";
 
 const links = [
   { label: "Shop", href: "/products", chevron: true },
+  { label: "On Sale", href: "/products?onSale=true" },
   { label: "New Arrivals", href: "/products?sortBy=createdAt&direction=desc" },
 ];
 

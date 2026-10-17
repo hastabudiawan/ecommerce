@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.RoundingMode; // Import sudah ada
 
 @Entity
 @Table(name = "products")
@@ -30,6 +31,13 @@ public class Product {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
+
+    // Field baru ditambahkan di sini
+    @Column(name = "discount_percent", nullable = false)
+    private int discountPercent = 0;
+
+    @Column(name = "final_price", nullable = false, precision = 12, scale = 2)
+    private BigDecimal finalPrice;
 
     @Column(nullable = false)
     private Integer stock;
@@ -65,6 +73,7 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stock = stock;
+        // Tidak perlu panggil recalculateFinalPrice() di constructor, karena otomatis akan dipanggil di onCreate() 
     }
 
     public Product(Store store, Category category, String name, String slug, String description,
@@ -83,6 +92,7 @@ public class Product {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        recalculateFinalPrice(); // Panggilan baru ditambahkan di sini
     }
 
     @PreUpdate
@@ -137,8 +147,32 @@ public class Product {
         return price;
     }
 
+    // Setter diubah untuk menghitung ulang finalPrice
     public void setPrice(BigDecimal price) {
         this.price = price;
+        recalculateFinalPrice();
+    }
+
+    // Accessors baru
+    public int getDiscountPercent() { 
+        return discountPercent; 
+    }
+
+    public void setDiscountPercent(int discountPercent) {
+        this.discountPercent = discountPercent;
+        recalculateFinalPrice();
+    }
+
+    public BigDecimal getFinalPrice() { 
+        return finalPrice; 
+    }
+
+    // Dipanggil setiap harga atau diskon berubah, jadi finalPrice tidak pernah usang
+    private void recalculateFinalPrice() {
+        if (price == null) return;
+        this.finalPrice = price
+                .multiply(BigDecimal.valueOf(100L - discountPercent))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     public Integer getStock() {

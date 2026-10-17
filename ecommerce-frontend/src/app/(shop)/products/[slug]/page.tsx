@@ -13,6 +13,7 @@ import { addCartItem } from "@/services/cart.service";
 import { getProductBySlug, getProducts } from "@/services/product.service";
 import { useAuthStore } from "@/store/auth.store";
 import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
+import { PriceTag } from "@/components/product/PriceTag";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -104,9 +105,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               Dijual oleh {product.storeName ?? "Platform"}
             </p>
 
-            <p className="mt-4 text-2xl font-semibold">
-              {formatRupiah(product.price)}
-            </p>
+            <PriceTag product={product} size="lg" className="mt-4" />
 
             {product.description && (
               <p className="mt-4 text-black/60">{product.description}</p>

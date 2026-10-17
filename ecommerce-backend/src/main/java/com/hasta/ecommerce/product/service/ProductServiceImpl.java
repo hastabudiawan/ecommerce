@@ -55,6 +55,9 @@ public class ProductServiceImpl implements ProductService {
         Product product = new Product(
                 category, request.name(), slug, request.description(),
                 request.price(), request.stock());
+        
+        // Simpan diskon (jika ada)
+        product.setDiscountPercent(discountOf(request.discountPercent()));
 
         return ProductMapper.toDto(productRepository.save(product));
     }
@@ -69,6 +72,9 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStock(request.stock());
+        
+        // Update diskon (jika ada perubahan)
+        product.setDiscountPercent(discountOf(request.discountPercent()));
 
         return ProductMapper.toDto(product);
     }
@@ -101,16 +107,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDto> getAll(Long categoryId, String keyword, Pageable pageable) {
-        Page<Product> products;
-        if (keyword != null && !keyword.isBlank()) {
-            products = productRepository.searchByNameAndStatus(keyword, ProductStatus.APPROVED, pageable);
-        } else if (categoryId != null) {
-            products = productRepository.findByCategoryIdAndStatus(categoryId, ProductStatus.APPROVED, pageable);
-        } else {
-            products = productRepository.findByStatus(ProductStatus.APPROVED, pageable);
-        }
-        return products.map(ProductMapper::toDto);
+    public Page<ProductDto> getAll(Long categoryId, String keyword, boolean onSale, Pageable pageable) {
+        return productRepository.browse(
+                ProductStatus.APPROVED,
+                categoryId == null ? 0L : categoryId,
+                onSale,
+                keyword == null ? "" : keyword.trim(),
+                pageable)
+                .map(ProductMapper::toDto);
     }
 
     // ---------- Seller ----------
@@ -127,6 +131,9 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = new Product(store, category, request.name(), slug, request.description(),
                 request.price(), request.stock());
+
+        // Simpan diskon (jika ada)
+        product.setDiscountPercent(discountOf(request.discountPercent()));
 
         return ProductMapper.toDto(productRepository.save(product));
     }
@@ -149,7 +156,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = findOwnedBySeller(sellerId, productId);
         Category category = findCategory(request.categoryId());
 
-        // Konten yang berubah menentukan perlu tidaknya review ulang (dibandingkan SEBELUM nilai baru dipasang)
+        // Konten yang berubah menentukan perlu tidaknya review ulang (dibandingkan
+        // SEBELUM nilai baru dipasang)
         boolean contentChanged = !Objects.equals(norm(product.getName()), norm(request.name()))
                 || !Objects.equals(norm(product.getDescription()), norm(request.description()))
                 || !product.getCategory().getId().equals(category.getId());
@@ -159,6 +167,9 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStock(request.stock());
+        
+        // Update diskon
+        product.setDiscountPercent(discountOf(request.discountPercent()));
 
         if (product.getStatus() == ProductStatus.REJECTED) {
             // Produk yang ditolak dianggap diajukan ulang begitu penjual memperbaikinya
@@ -247,7 +258,8 @@ public class ProductServiceImpl implements ProductService {
 
         product.addImage(image);
 
-        // Gambar baru adalah konten baru: produk seller yang sudah tayang ditinjau ulang.
+        // Gambar baru adalah konten baru: produk seller yang sudah tayang ditinjau
+        // ulang.
         // Produk platform (tanpa toko) dikecualikan.
         if (product.getStore() != null && product.getStatus() == ProductStatus.APPROVED) {
             product.setStatus(ProductStatus.PENDING);
@@ -269,7 +281,8 @@ public class ProductServiceImpl implements ProductService {
         imageUploadService.delete(image.getImageUrl());
         product.getImages().remove(image);
 
-        // Kalau yang dihapus gambar utama, gambar berikutnya (kalau ada) naik jadi utama
+        // Kalau yang dihapus gambar utama, gambar berikutnya (kalau ada) naik jadi
+        // utama
         if (wasPrimary && !product.getImages().isEmpty()) {
             product.getImages().get(0).setPrimary(true);
         }
@@ -328,7 +341,8 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    // Lebih ketat dari checkOwnership(): produk platform (tanpa toko) bukan milik seller manapun
+    // Lebih ketat dari checkOwnership(): produk platform (tanpa toko) bukan milik
+    // seller manapun
     private Product findOwnedBySeller(Long sellerId, Long productId) {
         Product product = findProduct(productId);
 
@@ -338,7 +352,8 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    // Dipakai untuk kelola gambar oleh ADMIN atau SELLER: peran sudah disaring di SecurityConfig,
+    // Dipakai untuk kelola gambar oleh ADMIN atau SELLER: peran sudah disaring di
+    // SecurityConfig,
     // jadi di sini cukup memblokir seller yang mengutak-atik produk toko lain.
     private void checkOwnership(Long userId, Product product) {
         boolean isProductOwner = product.getStore() != null
@@ -357,6 +372,11 @@ public class ProductServiceImpl implements ProductService {
 
     private static String norm(String value) {
         return value == null ? "" : value.trim();
+    }
+    
+    // Helper diskon
+    private static int discountOf(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private String ensureUniqueSlug(String baseSlug) {

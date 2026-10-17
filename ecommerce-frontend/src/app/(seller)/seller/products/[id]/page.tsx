@@ -149,7 +149,7 @@ export default function EditProductPage({
         <p className="mt-3 rounded-lg bg-surface px-4 py-3 text-sm text-black/70">
           Mengubah nama, deskripsi, kategori, atau menambah gambar akan mengirim
           produk kembali ke antrean review, dan produk tidak tampil di katalog
-          sampai disetujui lagi. Mengubah harga atau stok tidak memerlukan review.
+          sampai disetujui lagi. Mengubah harga, diskon, atau stok tidak memerlukan review.
         </p>
       )}
       {isArchived && (

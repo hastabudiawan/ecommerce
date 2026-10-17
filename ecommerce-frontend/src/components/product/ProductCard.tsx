@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
-import { formatRupiah } from "@/lib/utils";
+import { PriceTag } from "@/components/product/PriceTag";
 import type { Product } from "@/types/api";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
       <h3 className="mt-4 line-clamp-1 text-base font-medium">{product.name}</h3>
-      <p className="mt-1 font-semibold">{formatRupiah(product.price)}</p>
+      <PriceTag product={product} className="mt-1" />
     </Link>
   );
 }

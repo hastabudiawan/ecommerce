@@ -60,6 +60,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<PageResponse<ProductDto>>> getAll(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean onSale,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -69,7 +70,7 @@ public class ProductController {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<ProductDto> result = productService.getAll(categoryId, keyword, pageable);
+        Page<ProductDto> result = productService.getAll(categoryId, keyword, onSale, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(result)));
     }
 

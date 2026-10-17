@@ -8,13 +8,13 @@ export const SORT_OPTIONS = [
   {
     value: "price-asc",
     label: "Harga: Rendah ke Tinggi",
-    sortBy: "price",
+    sortBy: "finalPrice",
     direction: "asc" as const,
   },
   {
     value: "price-desc",
     label: "Harga: Tinggi ke Rendah",
-    sortBy: "price",
+    sortBy: "finalPrice",
     direction: "desc" as const,
   },
   {

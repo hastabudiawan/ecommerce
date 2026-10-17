@@ -54,7 +54,11 @@ export function ProductReviewCard({
         {product.description || "Tanpa deskripsi."}
       </p>
       <p className="mt-2 text-sm">
-        {formatRupiah(product.price)} · Stok {product.stock}
+        {/* {formatRupiah(product.price)} · Stok {product.stock} */}
+        {formatRupiah(product.finalPrice)}
+        {product.discountPercent > 0 &&
+          ` (normal ${formatRupiah(product.price)}, diskon ${product.discountPercent}%)`}
+        {" · "}Stok {product.stock}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -100,7 +104,11 @@ export function ProductReviewCard({
             error={reasonError ?? undefined}
           />
           <div className="flex gap-3">
-            <Button className="px-6 py-3" disabled={busy} onClick={submitReject}>
+            <Button
+              className="px-6 py-3"
+              disabled={busy}
+              onClick={submitReject}
+            >
               Kirim Penolakan
             </Button>
             <Button

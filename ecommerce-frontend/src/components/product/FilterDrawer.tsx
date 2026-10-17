@@ -3,12 +3,15 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { CategoryFilter } from "@/components/product/CategoryFilter";
+import { SaleToggle } from "@/components/product/SaleToggle";
 
 interface FilterDrawerProps {
   open: boolean;
   onClose: () => void;
   selectedCategoryId: number | null;
   onSelectCategory: (id: number | null) => void;
+  onSale: boolean;
+  onToggleSale: (checked: boolean) => void;
 }
 
 export function FilterDrawer({
@@ -16,6 +19,8 @@ export function FilterDrawer({
   onClose,
   selectedCategoryId,
   onSelectCategory,
+  onSale,
+  onToggleSale,
 }: FilterDrawerProps) {
   if (!open) return null;
 
@@ -32,6 +37,10 @@ export function FilterDrawer({
 
         <div className="mt-6">
           <CategoryFilter selectedId={selectedCategoryId} onSelect={onSelectCategory} />
+        </div>
+
+        <div className="mt-6">
+          <SaleToggle checked={onSale} onChange={onToggleSale} />
         </div>
 
         <Button onClick={onClose} className="mt-8 w-full">

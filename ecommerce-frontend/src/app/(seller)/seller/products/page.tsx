@@ -66,7 +66,9 @@ export default function SellerProductsPage() {
         <StatusTabs options={TABS} value={status} onChange={setStatus} />
       </div>
 
-      {isLoading && <p className="mt-6 text-sm text-black/50">Memuat produk...</p>}
+      {isLoading && (
+        <p className="mt-6 text-sm text-black/50">Memuat produk...</p>
+      )}
 
       {data && data.content.length === 0 && (
         <div className="mt-6 rounded-2xl border border-black/10 p-10 text-center">
@@ -80,7 +82,8 @@ export default function SellerProductsPage() {
 
       <div className="mt-6 space-y-3">
         {data?.content.map((product) => {
-          const image = product.images.find((img) => img.isPrimary) ?? product.images[0];
+          const image =
+            product.images.find((img) => img.isPrimary) ?? product.images[0];
 
           return (
             <Link
@@ -110,7 +113,11 @@ export default function SellerProductsPage() {
                   <ProductStatusBadge status={product.status} />
                 </div>
                 <p className="mt-1 text-sm text-black/60">
-                  {formatRupiah(product.price)} · Stok {product.stock}
+                  {/* {formatRupiah(product.price)} · Stok {product.stock} */}
+                  {formatRupiah(product.finalPrice)}
+                  {product.discountPercent > 0 &&
+                    ` (normal ${formatRupiah(product.price)}, diskon ${product.discountPercent}%)`}
+                  {" · "}Stok {product.stock}
                 </p>
                 {product.status === "REJECTED" && product.rejectionReason && (
                   <p className="mt-2 rounded-lg bg-sale-bg px-3 py-2 text-sm text-sale">
@@ -124,7 +131,11 @@ export default function SellerProductsPage() {
       </div>
 
       {data && (
-        <Pagination page={page} totalPages={data.totalPages} onChange={setPage} />
+        <Pagination
+          page={page}
+          totalPages={data.totalPages}
+          onChange={setPage}
+        />
       )}
     </div>
   );

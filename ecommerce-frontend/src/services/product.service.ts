@@ -10,6 +10,7 @@ import type {
 export interface ProductQuery {
   categoryId?: number;
   keyword?: string;
+  onSale?: boolean;
   page?: number;
   size?: number;
   sortBy?: string;

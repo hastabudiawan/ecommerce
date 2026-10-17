@@ -52,4 +52,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByCategoryId(Long categoryId);
 
+    // Filter kosong dikirim sebagai nilai netral (0, false, ""), bukan null:
+    // pola ":param IS NULL" pada PostgreSQL bisa memunculkan error tipe data
+    // parameter.
+    @Query("""
+            SELECT p FROM Product p
+            WHERE p.status = :status
+              AND (:categoryId = 0 OR p.category.id = :categoryId)
+              AND (:onSale = false OR p.discountPercent > 0)
+              AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            """)
+    Page<Product> browse(@Param("status") ProductStatus status,
+            @Param("categoryId") long categoryId,
+            @Param("onSale") boolean onSale,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
 }

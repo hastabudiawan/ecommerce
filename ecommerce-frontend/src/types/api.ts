@@ -101,6 +101,8 @@ export interface Product {
   slug: string;
   description: string | null;
   price: number;
+  discountPercent: number; // Tambahan baru
+  finalPrice: number;      // Tambahan baru
   stock: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED"; // Status ARCHIVED ditambahkan di sini
   rejectionReason: string | null;
@@ -113,6 +115,7 @@ export interface ProductRequest {
   name: string;
   description?: string;
   price: number;
+  discountPercent?: number; // Tambahan baru
   stock: number;
 }
 
