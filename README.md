@@ -1,4 +1,4 @@
-# E-Commerce Backend — Spring Boot
+# E-Commerce
 
 Backend REST API untuk platform e-commerce marketplace multi-vendor, dibangun dengan Spring Boot. Mendukung autentikasi berbasis JWT, manajemen produk, keranjang belanja, checkout multi-seller, sistem toko untuk penjual, workflow approval produk, settlement pendapatan seller, dan upload gambar produk ke cloud storage.
 
