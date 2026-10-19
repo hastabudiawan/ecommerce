@@ -10,9 +10,11 @@ public record CartItemDto(
         String imageUrl,
         Long storeId,
         String storeName,
+        Long variantId,        // null untuk produk tanpa varian
+        String variantLabel,   // misalnya "Hitam / L"
         BigDecimal priceSnapshot,
         Integer quantity,
         BigDecimal subtotal,
-        int stock,
-        boolean available   // false kalau produk sudah ditolak atau diturunkan admin
+        int stock,             // stok varian kalau ada varian, kalau tidak stok produk
+        boolean available      // false kalau produk sudah ditolak, diturunkan, atau diarsipkan
 ) {}

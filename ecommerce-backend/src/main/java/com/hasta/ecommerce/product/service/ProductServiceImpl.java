@@ -71,7 +71,11 @@ public class ProductServiceImpl implements ProductService {
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
-        product.setStock(request.stock());
+        
+        // Produk bervarian: stok adalah total stok varian, hanya diubah lewat varian
+        if (product.getVariants().isEmpty()) {
+            product.setStock(request.stock());
+        }
         
         // Update diskon (jika ada perubahan)
         product.setDiscountPercent(discountOf(request.discountPercent()));
@@ -166,7 +170,11 @@ public class ProductServiceImpl implements ProductService {
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
-        product.setStock(request.stock());
+        
+        // Produk bervarian: stok adalah total stok varian, hanya diubah lewat varian
+        if (product.getVariants().isEmpty()) {
+            product.setStock(request.stock());
+        }
         
         // Update diskon
         product.setDiscountPercent(discountOf(request.discountPercent()));
@@ -258,8 +266,7 @@ public class ProductServiceImpl implements ProductService {
 
         product.addImage(image);
 
-        // Gambar baru adalah konten baru: produk seller yang sudah tayang ditinjau
-        // ulang.
+        // Gambar baru adalah konten baru: produk seller yang sudah tayang ditinjau ulang.
         // Produk platform (tanpa toko) dikecualikan.
         if (product.getStore() != null && product.getStatus() == ProductStatus.APPROVED) {
             product.setStatus(ProductStatus.PENDING);
@@ -281,8 +288,7 @@ public class ProductServiceImpl implements ProductService {
         imageUploadService.delete(image.getImageUrl());
         product.getImages().remove(image);
 
-        // Kalau yang dihapus gambar utama, gambar berikutnya (kalau ada) naik jadi
-        // utama
+        // Kalau yang dihapus gambar utama, gambar berikutnya (kalau ada) naik jadi utama
         if (wasPrimary && !product.getImages().isEmpty()) {
             product.getImages().get(0).setPrimary(true);
         }
@@ -341,8 +347,7 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    // Lebih ketat dari checkOwnership(): produk platform (tanpa toko) bukan milik
-    // seller manapun
+    // Lebih ketat dari checkOwnership(): produk platform (tanpa toko) bukan milik seller manapun
     private Product findOwnedBySeller(Long sellerId, Long productId) {
         Product product = findProduct(productId);
 
@@ -352,8 +357,7 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    // Dipakai untuk kelola gambar oleh ADMIN atau SELLER: peran sudah disaring di
-    // SecurityConfig,
+    // Dipakai untuk kelola gambar oleh ADMIN atau SELLER: peran sudah disaring di SecurityConfig,
     // jadi di sini cukup memblokir seller yang mengutak-atik produk toko lain.
     private void checkOwnership(Long userId, Product product) {
         boolean isProductOwner = product.getStore() != null

@@ -81,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/archive").hasRole("SELLER") 
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/restore").hasRole("SELLER") 
+                        .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/variants").hasRole("SELLER") // baru
                         .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
                         
                         // --- Rule Baru ---

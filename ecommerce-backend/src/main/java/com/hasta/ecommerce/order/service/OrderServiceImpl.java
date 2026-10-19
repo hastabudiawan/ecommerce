@@ -6,9 +6,11 @@ import com.hasta.ecommerce.order.dto.OrderDto;
 import com.hasta.ecommerce.order.dto.OrderMapper;
 import com.hasta.ecommerce.order.dto.UpdateOrderStatusRequest;
 import com.hasta.ecommerce.order.entity.Order;
+import com.hasta.ecommerce.order.entity.OrderItem; // Tambahan Import
 import com.hasta.ecommerce.order.entity.OrderStatus;
 import com.hasta.ecommerce.order.repository.OrderRepository;
 import com.hasta.ecommerce.product.repository.ProductRepository;
+import com.hasta.ecommerce.product.repository.ProductVariantRepository; // Tambahan Import
 import com.hasta.ecommerce.settlement.service.SettlementService;
 
 import org.springframework.data.domain.Page;
@@ -26,12 +28,16 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository; // Tambahan Field
     private final SettlementService settlementService;
 
+    // Constructor diperbarui
     public OrderServiceImpl(OrderRepository orderRepository, ProductRepository productRepository,
+                             ProductVariantRepository productVariantRepository,
                              SettlementService settlementService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
         this.settlementService = settlementService;
     }
 
@@ -118,11 +124,26 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
+    // Metode restoreStock diperbarui
     private void restoreStock(Order order) {
         order.getItems().stream()
-                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
-                .forEach(item -> productRepository.increaseStock(
-                        item.getProduct().getId(), item.getQuantity()));
+                .sorted(Comparator
+                        .comparing((OrderItem item) -> item.getProduct().getId())
+                        .thenComparing(item -> item.getVariant() == null ? 0L : item.getVariant().getId()))
+                .forEach(item -> {
+                    int quantity = item.getQuantity();
+
+                    if (item.getVariant() != null) {
+                        // Varian masih ada: kembalikan ke varian dan ke total stok produk
+                        productVariantRepository.increaseStock(item.getVariant().getId(), quantity);
+                        productRepository.increaseStock(item.getProduct().getId(), quantity);
+                    } else if (item.getVariantLabel() == null) {
+                        // Produk tanpa varian
+                        productRepository.increaseStock(item.getProduct().getId(), quantity);
+                    }
+                    // variantLabel ada tapi varian null: varian sudah dihapus seller,
+                    // tidak ada stok yang bisa dikembalikan
+                });
     }
 
     private Order findOrder(Long orderId) {

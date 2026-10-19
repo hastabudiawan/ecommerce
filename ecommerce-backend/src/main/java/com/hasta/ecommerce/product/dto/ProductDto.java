@@ -21,6 +21,7 @@ public record ProductDto(
         int reviewCount,
         String status,
         String rejectionReason,
+        List<VariantDto> variants,
         List<ProductImageDto> images,
         LocalDateTime createdAt
 ) {}

@@ -18,7 +18,9 @@ import com.hasta.ecommerce.order.repository.OrderGroupRepository;
 import com.hasta.ecommerce.order.repository.OrderRepository;
 import com.hasta.ecommerce.product.entity.Product;
 import com.hasta.ecommerce.product.entity.ProductStatus;
+import com.hasta.ecommerce.product.entity.ProductVariant;
 import com.hasta.ecommerce.product.repository.ProductRepository;
+import com.hasta.ecommerce.product.repository.ProductVariantRepository;
 import com.hasta.ecommerce.store.entity.Store;
 import com.hasta.ecommerce.user.entity.Address;
 import com.hasta.ecommerce.user.entity.User;
@@ -46,12 +48,14 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final OrderRepository orderRepository;
     private final OrderGroupRepository orderGroupRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final BigDecimal platformShippingFee;
 
     public CheckoutServiceImpl(CartRepository cartRepository, AddressRepository addressRepository,
                                 UserRepository userRepository, OrderRepository orderRepository,
                                 OrderGroupRepository orderGroupRepository,
                                 ProductRepository productRepository,
+                                ProductVariantRepository productVariantRepository,
                                 @Value("${app.shipping.platform-fee:15000}") BigDecimal platformShippingFee) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
@@ -59,6 +63,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         this.orderRepository = orderRepository;
         this.orderGroupRepository = orderGroupRepository;
         this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
         this.platformShippingFee = platformShippingFee;
     }
 
@@ -122,27 +127,50 @@ public class CheckoutServiceImpl implements CheckoutService {
         // adalah update atomik di langkah 2.
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
+            ProductVariant variant = cartItem.getVariant();
 
             if (product.getStatus() != ProductStatus.APPROVED) {
                 throw new BadRequestException("Produk '" + product.getName()
                         + "' sudah tidak tersedia, hapus dari keranjang untuk melanjutkan");
             }
-            if (product.getStock() < cartItem.getQuantity()) {
+            // Produk yang baru mendapat varian setelah masuk keranjang tanpa varian
+            if (variant == null && !product.getVariants().isEmpty()) {
+                throw new BadRequestException("Produk '" + product.getName()
+                        + "' sekarang punya pilihan varian. Hapus dari keranjang lalu pilih ulang.");
+            }
+
+            int available = variant != null ? variant.getStock() : product.getStock();
+            if (available < cartItem.getQuantity()) {
                 throw new InsufficientStockException(
-                        "Stok produk '" + product.getName() + "' tidak cukup. Tersedia: "
-                                + product.getStock() + ", di cart: " + cartItem.getQuantity());
+                        "Stok '" + displayName(product, variant) + "' tidak cukup. Tersedia: "
+                                + available + ", di cart: " + cartItem.getQuantity());
             }
         }
 
-        // LANGKAH 2: Kurangi stok secara atomik, berurutan menurut id produk (lihat Part 15).
+        // LANGKAH 2: Kurangi stok secara atomik. Item diurutkan menurut produk lalu varian supaya
+        // dua checkout yang berisi barang sama tidak saling mengunci (deadlock). Untuk item
+        // bervarian, stok varian dan total stok produk dikurangi bersama-sama. Kalau ada yang
+        // gagal, exception membatalkan seluruh transaksi.
         cart.getItems().stream()
-                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .sorted(Comparator
+                        .comparing((CartItem item) -> item.getProduct().getId())
+                        .thenComparing(item -> item.getVariant() == null ? 0L : item.getVariant().getId()))
                 .forEach(item -> {
+                    String name = displayName(item.getProduct(), item.getVariant());
+
+                    if (item.getVariant() != null) {
+                        int updated = productVariantRepository.decreaseStock(
+                                item.getVariant().getId(), item.getQuantity());
+                        if (updated == 0) {
+                            throw new InsufficientStockException("Stok '" + name
+                                    + "' tidak cukup. Stoknya baru saja berubah, coba lagi.");
+                        }
+                    }
+
                     int updated = productRepository.decreaseStock(
                             item.getProduct().getId(), item.getQuantity());
                     if (updated == 0) {
-                        throw new InsufficientStockException("Stok produk '"
-                                + item.getProduct().getName()
+                        throw new InsufficientStockException("Stok '" + name
                                 + "' tidak cukup. Stoknya baru saja berubah, coba lagi.");
                     }
                 });
@@ -168,7 +196,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                         .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
                 order.addItem(new OrderItem(
-                        product, product.getName(), cartItem.getPriceSnapshot(),
+                        product, cartItem.getVariant(), product.getName(), cartItem.getPriceSnapshot(),
                         cartItem.getQuantity(), itemSubtotal
                 ));
             }
@@ -220,5 +248,9 @@ public class CheckoutServiceImpl implements CheckoutService {
     private BigDecimal shippingFor(List<CartItem> items) {
         Store store = storeOf(items);
         return store != null ? store.getShippingFee() : platformShippingFee;
+    }
+
+    private String displayName(Product product, ProductVariant variant) {
+        return variant != null ? product.getName() + " (" + variant.getLabel() + ")" : product.getName();
     }
 }

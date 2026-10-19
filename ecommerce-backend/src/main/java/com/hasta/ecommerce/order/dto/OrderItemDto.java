@@ -7,5 +7,6 @@ public record OrderItemDto(
         String productName,
         BigDecimal priceSnapshot,
         Integer quantity,
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        String variantLabel
 ) {}

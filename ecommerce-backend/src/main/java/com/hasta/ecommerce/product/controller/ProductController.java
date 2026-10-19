@@ -24,8 +24,10 @@ import com.hasta.ecommerce.product.dto.ProductDto;
 import com.hasta.ecommerce.product.dto.ProductImageDto;
 import com.hasta.ecommerce.product.dto.RejectProductRequest;
 import com.hasta.ecommerce.product.dto.UpdateProductRequest;
+import com.hasta.ecommerce.product.dto.VariantsRequest; // Import baru
 import com.hasta.ecommerce.product.entity.ProductStatus;
 import com.hasta.ecommerce.product.service.ProductService;
+import com.hasta.ecommerce.product.service.ProductVariantService; // Import baru
 import com.hasta.ecommerce.security.SecurityUtils;
 import jakarta.validation.Valid;
 
@@ -34,9 +36,12 @@ import jakarta.validation.Valid;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductVariantService productVariantService; // Field baru
 
-    public ProductController(ProductService productService) {
+    // Constructor diperbarui
+    public ProductController(ProductService productService, ProductVariantService productVariantService) {
         this.productService = productService;
+        this.productVariantService = productVariantService;
     }
 
     @PostMapping
@@ -179,5 +184,15 @@ public class ProductController {
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 "Gambar utama diperbarui", productService.setPrimaryImage(userId, id, imageId)));
+    }
+
+    // Endpoint baru untuk varian
+    @PutMapping("/seller/{id}/variants")
+    public ResponseEntity<ApiResponse<ProductDto>> replaceVariants(
+            @PathVariable Long id, @Valid @RequestBody VariantsRequest request) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                "Varian produk diperbarui",
+                productVariantService.replaceVariants(sellerId, id, request.variants())));
     }
 }

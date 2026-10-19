@@ -47,7 +47,8 @@ public class OrderMapper {
                 item.getProductNameSnapshot(),
                 item.getPriceSnapshot(),
                 item.getQuantity(),
-                item.getSubtotal()
+                item.getSubtotal(),
+                item.getVariantLabel()
         );
     }
 

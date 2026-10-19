@@ -2,11 +2,13 @@ package com.hasta.ecommerce.product.entity;
 
 import com.hasta.ecommerce.store.entity.Store;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.math.RoundingMode; // Import sudah ada
 
 @Entity
 @Table(name = "products")
@@ -32,7 +34,6 @@ public class Product {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    // Field baru ditambahkan di sini
     @Column(name = "discount_percent", nullable = false)
     private int discountPercent = 0;
 
@@ -57,6 +58,12 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images = new ArrayList<>();
 
+    // Tambahan baru untuk varian produk
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    @BatchSize(size = 50)
+    private List<ProductVariant> variants = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store; // null = produk milik platform (dibuat ADMIN langsung)
@@ -79,8 +86,6 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stock = stock;
-        // Tidak perlu panggil recalculateFinalPrice() di constructor, karena otomatis
-        // akan dipanggil di onCreate()
     }
 
     public Product(Store store, Category category, String name, String slug, String description,
@@ -99,7 +104,7 @@ public class Product {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        recalculateFinalPrice(); // Panggilan baru ditambahkan di sini
+        recalculateFinalPrice();
     }
 
     @PreUpdate
@@ -111,6 +116,23 @@ public class Product {
     public void addImage(ProductImage image) {
         images.add(image);
         image.setProduct(this);
+    }
+
+    // Accessors baru untuk variants
+    // public List<ProductVariant> getVariants() {
+    // return variants;
+    // }
+
+    // public void addVariant(ProductVariant variant) {
+    // variants.add(variant);
+    // variant.setProduct(this); // Optional: menjaga konsistensi dua arah
+    // }
+    public List<ProductVariant> getVariants() {
+        return variants;
+    }
+
+    public void addVariant(ProductVariant variant) {
+        variants.add(variant);
     }
 
     // Getters & setters
@@ -154,13 +176,11 @@ public class Product {
         return price;
     }
 
-    // Setter diubah untuk menghitung ulang finalPrice
     public void setPrice(BigDecimal price) {
         this.price = price;
         recalculateFinalPrice();
     }
 
-    // Accessors baru
     public int getDiscountPercent() {
         return discountPercent;
     }
@@ -174,8 +194,6 @@ public class Product {
         return finalPrice;
     }
 
-    // Dipanggil setiap harga atau diskon berubah, jadi finalPrice tidak pernah
-    // usang
     private void recalculateFinalPrice() {
         if (price == null)
             return;
