@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { groupByStore } from "@/lib/cart";
 import { getErrorMessage } from "@/lib/errors";
-import { formatRupiah } from "@/lib/utils";
+import { formatRupiah, withVariant } from "@/lib/utils"; // withVariant ditambahkan
 import { getAddresses } from "@/services/address.service";
 import { getCart } from "@/services/cart.service";
 import { checkout, previewCheckout } from "@/services/order.service";
@@ -171,7 +171,8 @@ function CheckoutContent() {
                       className="flex justify-between gap-4 py-3 text-sm"
                     >
                       <span>
-                        {item.productName}{" "}
+                        {/* withVariant digunakan di sini */}
+                        {withVariant(item.productName, item.variantLabel)}{" "}
                         <span className="text-black/50">× {item.quantity}</span>
                       </span>
                       <span className="font-medium">{formatRupiah(item.subtotal)}</span>

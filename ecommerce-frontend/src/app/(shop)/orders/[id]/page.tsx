@@ -8,7 +8,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 // import { OrderProgress } from "@/components/order/OrderProgress";
 import { StatusBadge } from "@/components/order/StatusBadge";
 import { Container } from "@/components/ui/Container";
-import { formatDate, formatRupiah } from "@/lib/utils";
+import { formatDate, formatRupiah, withVariant } from "@/lib/utils"; // withVariant ditambahkan
 import { getOrder } from "@/services/order.service";
 import { OrderActions } from "@/components/order/OrderActions";
 
@@ -80,7 +80,10 @@ function OrderDetailContent({ id }: { id: number }) {
                 className="flex justify-between gap-4 py-3"
               >
                 <div>
-                  <p className="font-medium">{item.productName}</p>
+                  {/* withVariant digunakan di sini */}
+                  <p className="font-medium">
+                    {withVariant(item.productName, item.variantLabel)}
+                  </p>
                   <p className="text-sm text-black/50">
                     {formatRupiah(item.priceSnapshot)} × {item.quantity}
                   </p>

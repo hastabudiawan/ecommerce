@@ -101,13 +101,14 @@ export interface Product {
   slug: string;
   description: string | null;
   price: number;
-  discountPercent: number; 
-  finalPrice: number;      
+  discountPercent: number;
+  finalPrice: number;
   stock: number;
-  ratingAverage: number;   // Tambahan baru
-  reviewCount: number;     // Tambahan baru
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED"; 
+  ratingAverage: number; // Tambahan baru
+  reviewCount: number; // Tambahan baru
+  status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
   rejectionReason: string | null;
+  variants: Variant[];
   images: ProductImage[];
   createdAt: string;
 }
@@ -117,7 +118,7 @@ export interface ProductRequest {
   name: string;
   description?: string;
   price: number;
-  discountPercent?: number; 
+  discountPercent?: number;
   stock: number;
 }
 
@@ -184,6 +185,8 @@ export interface CartItemDto {
   quantity: number;
   subtotal: number;
   stock: number;
+  variantId: number | null;
+  variantLabel: string | null;
   available: boolean;
 }
 
@@ -196,6 +199,7 @@ export interface CartDto {
 
 export interface AddCartItemRequest {
   productId: number;
+  variantId?: number;
   quantity: number;
 }
 
@@ -242,13 +246,19 @@ export interface CheckoutPreview {
   total: number;
 }
 
-export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+export type OrderStatus =
+  | "PENDING"
+  | "PAID"
+  | "SHIPPED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export interface OrderItem {
   productId: number;
   productName: string;
   priceSnapshot: number;
   quantity: number;
+  variantLabel: string | null;
   subtotal: number;
 }
 
@@ -296,4 +306,21 @@ export interface Settlement {
 export interface SettlementSummary {
   totalPending: number;
   totalReleased: number;
+}
+
+export interface Variant {
+  id: number;
+  colorName: string | null;
+  colorHex: string | null;
+  size: string | null;
+  stock: number;
+  label: string;
+}
+
+export interface VariantRequest {
+  id?: number;
+  colorName?: string;
+  colorHex?: string;
+  size?: string;
+  stock: number;
 }

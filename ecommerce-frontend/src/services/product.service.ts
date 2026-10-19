@@ -5,6 +5,7 @@ import type {
   Product,
   ProductImage,
   ProductRequest,
+  VariantRequest,
 } from "@/types/api";
 
 export interface ProductQuery {
@@ -141,5 +142,20 @@ export async function approveProduct(id: number) {
 
 export async function rejectProduct({ id, reason }: { id: number; reason: string }) {
   const res = await api.put<ApiResponse<Product>>(`/products/${id}/reject`, { reason });
+  return res.data.data;
+}
+
+// ---------- Varian Produk ----------
+
+export async function replaceVariants({
+  productId,
+  variants,
+}: {
+  productId: number;
+  variants: VariantRequest[];
+}) {
+  const res = await api.put<ApiResponse<Product>>(`/products/seller/${productId}/variants`, {
+    variants,
+  });
   return res.data.data;
 }

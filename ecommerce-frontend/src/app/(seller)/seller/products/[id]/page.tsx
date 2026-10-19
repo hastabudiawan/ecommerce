@@ -16,6 +16,7 @@ import {
   updateSellerProduct,
 } from "@/services/product.service";
 import { getMyStore } from "@/services/store.service";
+import { VariantManager } from "@/components/seller/VariantManager";
 
 export default function EditProductPage({
   params,
@@ -165,10 +166,23 @@ export default function EditProductPage({
         </div>
       </section>
 
+      {/* Menambahkan seksi VariantManager */}
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold">Varian (warna dan ukuran)</h2>
+        <div className="mt-3">
+          <VariantManager
+            key={product.variants.map((v) => `${v.id}:${v.stock}:${v.label}`).join(",")}
+            product={product}
+          />
+        </div>
+      </section>
+
       <section className="mt-10">
         <h2 className="text-lg font-semibold">Detail Produk</h2>
         <div className="mt-3">
+          {/* Menambahkan prop key pada ProductForm */}
           <ProductForm
+            key={product.variants.length > 0 ? "with-variants" : "no-variants"}
             initial={product}
             submitLabel="Simpan Perubahan"
             isPending={update.isPending}

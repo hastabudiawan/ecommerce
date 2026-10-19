@@ -4,18 +4,19 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Store } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
+import { PriceTag } from "@/components/product/PriceTag";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductSection } from "@/components/product/ProductSection";
-//import { formatRupiah } from "@/lib/utils";
+import { StarRating } from "@/components/product/StarRating";
+import { VariantPicker } from "@/components/product/VariantPicker";
+import { ReviewSection } from "@/components/review/ReviewSection";
+import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
+import { Button } from "@/components/ui/Button";
+import { Container } from "@/components/ui/Container";
+import { getErrorMessage } from "@/lib/errors";
 import { addCartItem } from "@/services/cart.service";
 import { getProductBySlug, getProducts } from "@/services/product.service";
 import { useAuthStore } from "@/store/auth.store";
-import { ProductStatusBadge } from "@/components/seller/ProductStatusBadge";
-import { PriceTag } from "@/components/product/PriceTag";
-import { StarRating } from "@/components/product/StarRating";
-import { ReviewSection } from "@/components/review/ReviewSection";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -28,6 +29,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const user = useAuthStore((s) => s.user);
 
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
@@ -47,8 +50,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       setFeedback("Berhasil ditambahkan ke keranjang.");
     },
-    onError: () => {
-      setFeedback("Gagal menambahkan ke keranjang. Coba lagi.");
+    onError: (err) => {
+      setFeedback(getErrorMessage(err, "Gagal menambahkan ke keranjang. Coba lagi."));
     },
   });
 
@@ -60,21 +63,56 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     return <Container className="py-10">Produk tidak ditemukan.</Container>;
   }
 
+  const variants = product.variants ?? [];
+  const hasVariants = variants.length > 0;
+  const hasColors = variants.some((v) => v.colorName);
+  const hasSizes = variants.some((v) => v.size);
+
+  // Varian terpilih: semua atribut yang dipakai produk ini sudah dipilih
+  const selectedVariant = hasVariants
+    ? (variants.find(
+        (v) =>
+          (!hasColors || v.colorName === selectedColor) &&
+          (!hasSizes || v.size === selectedSize),
+      ) ?? null)
+    : null;
+  const selectionIncomplete = hasVariants && !selectedVariant;
+
+  const availableStock = hasVariants ? (selectedVariant?.stock ?? 0) : product.stock;
+  const outOfStock = product.stock <= 0;
+  const notPublished = product.status !== "APPROVED";
+
+  function pickColor(color: string) {
+    setSelectedColor(color);
+    // Kalau ukuran terpilih tidak tersedia pada warna baru, ukuran dikosongkan
+    if (
+      selectedSize &&
+      !variants.some((v) => v.colorName === color && v.size === selectedSize && v.stock > 0)
+    ) {
+      setSelectedSize(null);
+    }
+    setQuantity(1);
+    setFeedback(null);
+  }
+
+  function pickSize(size: string) {
+    setSelectedSize(size);
+    setQuantity(1);
+    setFeedback(null);
+  }
+
   function handleAddToCart() {
     if (!user) {
       router.push("/login");
       return;
     }
-
-    if (!product) {
-      return;
-    }
-
-    addToCart.mutate({ productId: product.id, quantity });
+    addToCart.mutate({
+      productId: product!.id,
+      variantId: selectedVariant?.id,
+      quantity,
+    });
   }
 
-  const outOfStock = product.stock <= 0;
-  const notPublished = product.status !== "APPROVED";
   const relatedProducts = (related?.content ?? [])
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
@@ -90,20 +128,18 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <ProductGallery images={product.images} />
 
           <div>
-            <h1 className="font-display text-2xl md:text-3xl">
-              {product.name}
-            </h1>
+            <h1 className="font-display text-2xl md:text-3xl">{product.name}</h1>
+
             {notPublished && (
               <div className="mt-3 flex items-start gap-3 rounded-lg bg-surface px-4 py-3 text-sm text-black/70">
                 <ProductStatusBadge status={product.status} />
                 <p>
-                  Produk ini belum tampil di katalog. Halaman ini hanya bisa
-                  dilihat oleh pemilik toko dan admin.
+                  Produk ini belum tampil di katalog. Halaman ini hanya bisa dilihat oleh
+                  pemilik toko dan admin.
                 </p>
               </div>
             )}
 
-            {/* Menampilkan ringkasan rating ulasan */}
             {product.reviewCount > 0 && (
               <a href="#ulasan" className="mt-2 flex items-center gap-2">
                 <StarRating value={product.ratingAverage} />
@@ -124,8 +160,24 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <p className="mt-4 text-black/60">{product.description}</p>
             )}
 
+            {hasVariants && (
+              <div className="mt-6">
+                <VariantPicker
+                  variants={variants}
+                  selectedColor={selectedColor}
+                  selectedSize={selectedSize}
+                  onColorChange={pickColor}
+                  onSizeChange={pickSize}
+                />
+              </div>
+            )}
+
             <p className="mt-4 text-sm text-black/50">
-              {outOfStock ? "Stok habis" : `Stok tersedia: ${product.stock}`}
+              {outOfStock
+                ? "Stok habis"
+                : selectionIncomplete
+                  ? "Pilih varian untuk melihat stok"
+                  : `Stok tersedia: ${availableStock}`}
             </p>
 
             <div className="mt-6 flex items-center gap-4">
@@ -139,9 +191,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </button>
                 <span className="w-8 text-center text-sm">{quantity}</span>
                 <button
-                  onClick={() =>
-                    setQuantity((q) => Math.min(product.stock, q + 1))
-                  }
+                  onClick={() => setQuantity((q) => Math.min(Math.max(availableStock, 1), q + 1))}
                   className="p-3"
                   aria-label="Tambah"
                 >
@@ -151,26 +201,31 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               <Button
                 onClick={handleAddToCart}
-                disabled={outOfStock || notPublished || addToCart.isPending}
+                disabled={
+                  outOfStock ||
+                  notPublished ||
+                  selectionIncomplete ||
+                  availableStock <= 0 ||
+                  addToCart.isPending
+                }
                 className="flex-1"
               >
                 {notPublished
                   ? "Belum Tersedia"
                   : outOfStock
                     ? "Stok Habis"
-                    : addToCart.isPending
-                      ? "Menambahkan..."
-                      : "Add to Cart"}
+                    : selectionIncomplete
+                      ? "Pilih Varian"
+                      : addToCart.isPending
+                        ? "Menambahkan..."
+                        : "Add to Cart"}
               </Button>
             </div>
 
-            {feedback && (
-              <p className="mt-3 text-sm text-black/60">{feedback}</p>
-            )}
+            {feedback && <p className="mt-3 text-sm text-black/60">{feedback}</p>}
           </div>
         </div>
 
-        {/* Memanggil komponen ReviewSection */}
         <ReviewSection product={product} />
       </Container>
 

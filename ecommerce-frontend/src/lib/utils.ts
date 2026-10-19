@@ -38,3 +38,8 @@ export function formatDate(value: string) {
 export function formatDay(value: string) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(value));
 }
+
+// "Kaos Polos" + "Hitam / L" menjadi "Kaos Polos (Hitam / L)"
+export function withVariant(name: string, variantLabel?: string | null) {
+  return variantLabel ? `${name} (${variantLabel})` : name;
+}

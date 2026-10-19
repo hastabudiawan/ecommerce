@@ -60,6 +60,9 @@ export function ProductForm({
       ? Math.round((Number(priceValue) * (100 - discountNumber)) / 100)
       : null;
 
+  // Cek apakah produk memiliki varian
+  const hasVariants = (initial?.variants?.length ?? 0) > 0;
+
   // Form baru dirender setelah kategori siap, supaya <select> sudah punya opsi
   // saat nilai awalnya dipasang (kalau tidak, kategori produk yang diedit tidak terpilih).
   if (!categories) {
@@ -75,7 +78,8 @@ export function ProductForm({
           description: values.description?.trim() || undefined,
           price: Number(values.price),
           discountPercent: Number(values.discountPercent || "0"),
-          stock: Number(values.stock),
+          // Jika ada varian, biarkan nilai stok dari backend. Jika tidak, gunakan dari form.
+          stock: hasVariants ? (initial?.stock ?? 0) : Number(values.stock),
         }),
       )}
       className="space-y-4"
@@ -116,12 +120,20 @@ export function ProductForm({
           {...register("discountPercent")}
           error={errors.discountPercent?.message}
         />
-        <Field
-          label="Stok"
-          inputMode="numeric"
-          {...register("stock")}
-          error={errors.stock?.message}
-        />
+        {/* Render field stok secara kondisional berdasarkan ketersediaan varian */}
+        {hasVariants ? (
+          <div>
+            <Field label="Stok (total varian)" value={String(initial?.stock ?? 0)} readOnly disabled />
+            <p className="mt-1 text-xs text-black/50">Stok diatur per varian.</p>
+          </div>
+        ) : (
+          <Field
+            label="Stok"
+            inputMode="numeric"
+            {...register("stock")}
+            error={errors.stock?.message}
+          />
+        )}
       </div>
 
       {previewPrice !== null && (

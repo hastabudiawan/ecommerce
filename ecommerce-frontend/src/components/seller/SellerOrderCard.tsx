@@ -2,7 +2,7 @@ import { Store } from "lucide-react";
 import { StatusBadge } from "@/components/order/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import type { OrderAction } from "@/lib/order-status";
-import { formatDate, formatRupiah } from "@/lib/utils";
+import { formatDate, formatRupiah, withVariant } from "@/lib/utils"; // withVariant ditambahkan
 import type { Order, OrderStatus } from "@/types/api";
 
 interface SellerOrderCardProps {
@@ -44,7 +44,8 @@ export function SellerOrderCard({
         {order.items.map((item) => (
           <li key={item.productId} className="flex justify-between gap-4 py-2 text-sm">
             <span>
-              {item.productName}{" "}
+              {/* withVariant digunakan di sini */}
+              {withVariant(item.productName, item.variantLabel)}{" "}
               <span className="text-black/50">× {item.quantity}</span>
             </span>
             <span className="font-medium">{formatRupiah(item.subtotal)}</span>
