@@ -74,20 +74,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        // Rule permitAll yang sudah diperluas
+                        .requestMatchers("/api/auth/register", "/api/auth/login",
+                                "/api/auth/forgot-password", "/api/auth/reset-password",
+                                "/api/auth/verify-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/open-store").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/seller/**").hasRole("SELLER")
                         .requestMatchers(HttpMethod.POST, "/api/products/seller").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/archive").hasRole("SELLER") 
                         .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/restore").hasRole("SELLER") 
-                        .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/variants").hasRole("SELLER") // baru
+                        .requestMatchers(HttpMethod.PUT, "/api/products/seller/*/variants").hasRole("SELLER")
                         .requestMatchers(HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
                         
-                        // --- Rule Baru ---
+                        // --- Review Produk ---
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products/*/reviews").authenticated()
-                        // -----------------
                         
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/approve").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*/reject").hasRole("ADMIN")

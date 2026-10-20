@@ -13,7 +13,7 @@ import com.hasta.ecommerce.user.entity.User;
 import com.hasta.ecommerce.user.repository.RoleRepository;
 import com.hasta.ecommerce.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException; // Import baru ditambahkan
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,13 +28,14 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final StoreService storeService;
-    private final LoginAttemptService loginAttemptService; // Field baru ditambahkan
+    private final LoginAttemptService loginAttemptService;
+    private final AccountSecurityService accountSecurityService;
 
-    // Konstruktor diperbarui dengan penambahan LoginAttemptService
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-            JwtTokenProvider jwtTokenProvider, StoreService storeService,
-            LoginAttemptService loginAttemptService) {
+                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
+                        JwtTokenProvider jwtTokenProvider, StoreService storeService,
+                        LoginAttemptService loginAttemptService,
+                        AccountSecurityService accountSecurityService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -42,6 +43,7 @@ public class AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
         this.storeService = storeService;
         this.loginAttemptService = loginAttemptService;
+        this.accountSecurityService = accountSecurityService;
     }
 
     @Transactional
@@ -50,8 +52,6 @@ public class AuthService {
             throw new BadRequestException("Email sudah terdaftar");
         }
 
-        // Default role user baru: CUSTOMER. Role ADMIN cuma bisa di-assign manual lewat database
-        // atau lewat endpoint khusus yang dilindungi (di luar scope tutorial ini).
         Role customerRole = roleRepository.findByName("CUSTOMER")
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Role CUSTOMER tidak ditemukan, pastikan seed data roles sudah ada"));
@@ -62,14 +62,16 @@ public class AuthService {
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 request.phone());
+        user.setEmailVerified(false);
+
         User saved = userRepository.save(user);
+        accountSecurityService.sendVerification(saved.getId());
 
         String token = jwtTokenProvider.generateToken(saved.getId(), saved.getEmail(), customerRole.getName());
         return new AuthResponse(token, saved.getId(), saved.getName(), saved.getEmail(), customerRole.getName());
     }
 
     public AuthResponse login(LoginRequest request) {
-        // Cek dulu apakah email ini sedang diblokir karena terlalu banyak gagal login
         loginAttemptService.checkAllowed(request.email());
 
         try {
@@ -77,12 +79,10 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
         } catch (BadCredentialsException e) {
-            // Jika login gagal (password salah), catat kegagalannya
             loginAttemptService.recordFailure(request.email());
             throw e;
         }
 
-        // Jika berhasil login, reset counter kegagalan
         loginAttemptService.reset(request.email());
 
         User user = userRepository.findByEmail(request.email())
@@ -92,7 +92,6 @@ public class AuthService {
         return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().getName());
     }
 
-    // Method untuk membuka toko
     @Transactional
     public AuthResponse openStore(Long userId, CreateStoreRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
@@ -101,14 +100,12 @@ public class AuthService {
             throw new BadRequestException("Hanya akun customer yang bisa membuka toko");
         }
 
-        // Aturan "satu akun satu toko" sudah dijaga di createStore()
         storeService.createStore(userId, request);
 
         Role sellerRole = roleRepository.findByName("SELLER")
                 .orElseThrow(() -> new ResourceNotFoundException("Role SELLER tidak ditemukan"));
         user.setRole(sellerRole);
 
-        // Token lama masih membawa klaim role CUSTOMER, jadi dikeluarkan token baru
         String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), sellerRole.getName());
         return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), sellerRole.getName());
     }

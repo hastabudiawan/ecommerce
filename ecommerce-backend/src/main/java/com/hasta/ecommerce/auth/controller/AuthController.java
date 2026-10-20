@@ -1,8 +1,12 @@
 package com.hasta.ecommerce.auth.controller;
 
 import com.hasta.ecommerce.auth.dto.AuthResponse;
+import com.hasta.ecommerce.auth.dto.ForgotPasswordRequest;
 import com.hasta.ecommerce.auth.dto.LoginRequest;
 import com.hasta.ecommerce.auth.dto.RegisterRequest;
+import com.hasta.ecommerce.auth.dto.ResetPasswordRequest;
+import com.hasta.ecommerce.auth.dto.VerifyEmailRequest;
+import com.hasta.ecommerce.auth.service.AccountSecurityService;
 import com.hasta.ecommerce.auth.service.AuthService;
 import com.hasta.ecommerce.common.response.ApiResponse;
 import com.hasta.ecommerce.security.SecurityUtils;
@@ -20,10 +24,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final AccountSecurityService accountSecurityService;
 
-    public AuthController(AuthService authService, TokenBlacklistService tokenBlacklistService) {
+    public AuthController(AuthService authService, TokenBlacklistService tokenBlacklistService,
+                           AccountSecurityService accountSecurityService) {
         this.authService = authService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.accountSecurityService = accountSecurityService;
     }
 
     @PostMapping("/register")
@@ -55,6 +62,33 @@ public class AuthController {
         Long userId = SecurityUtils.getCurrentUserId();
         AuthResponse response = authService.openStore(userId, request);
         return ResponseEntity.ok(ApiResponse.success("Toko berhasil dibuat, akunmu sekarang seller", response));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        accountSecurityService.verifyEmail(request.token());
+        return ResponseEntity.ok(ApiResponse.success("Email berhasil diverifikasi", null));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerification() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        accountSecurityService.sendVerification(userId);
+        return ResponseEntity.ok(ApiResponse.success("Email verifikasi dikirim", null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        accountSecurityService.requestPasswordReset(request.email());
+        // Pesan yang sama untuk email terdaftar maupun tidak
+        return ResponseEntity.ok(ApiResponse.success(
+                "Jika email terdaftar, kami telah mengirim tautan untuk mengatur ulang password", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        accountSecurityService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password berhasil diatur ulang. Silakan login.", null));
     }
 
     private String extractToken(HttpServletRequest request) {

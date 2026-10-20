@@ -122,6 +122,12 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         User user = userRepository.findByIdOrThrow(userId);
 
+        // Pengecekan verifikasi email sebelum checkout
+        if (!user.isEmailVerified()) {
+            throw new BadRequestException(
+                    "Verifikasi email kamu dulu sebelum checkout. Cek kotak masuk, atau kirim ulang email verifikasi dari banner di bagian atas halaman.");
+        }
+
         // LANGKAH 1: Validasi SEMUA item dulu, sebelum ada perubahan apa pun.
         // Pemeriksaan awal supaya pesan errornya jelas; penjaga stok yang sebenarnya
         // adalah update atomik di langkah 2.

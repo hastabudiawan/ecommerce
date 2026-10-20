@@ -9,5 +9,6 @@ public record AccountDto(
         String phone,
         String role,
         boolean hasStore,
+        boolean emailVerified,
         LocalDateTime createdAt
 ) {}

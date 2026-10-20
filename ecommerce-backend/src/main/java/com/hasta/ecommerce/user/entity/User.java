@@ -36,6 +36,13 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    // Field baru ditambahkan di sini
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = true;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     protected User() {}
 
     public User(Role role, String name, String email, String password, String phone) {
@@ -73,4 +80,16 @@ public class User {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+    // Accessors baru
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
+
+    // Mengganti password sekaligus mencatat waktunya, supaya token login yang lebih lama bisa ditolak
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.passwordChangedAt = LocalDateTime.now();
+    }
 }

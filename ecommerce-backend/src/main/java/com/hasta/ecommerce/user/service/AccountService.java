@@ -56,10 +56,9 @@ public class AccountService {
             throw new BadRequestException("Password baru tidak boleh sama dengan password saat ini");
         }
 
-        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        // Mencatat waktu perubahan: semua token yang lebih lama, di perangkat mana pun, ditolak
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
 
-        // Token yang dipakai untuk request ini dicabut, lalu diterbitkan yang baru.
-        // Token di perangkat lain tidak ikut dicabut (lihat batasan di bagian 1).
         if (currentToken != null) {
             tokenBlacklistService.blacklist(currentToken);
         }
@@ -77,6 +76,7 @@ public class AccountService {
                 user.getPhone(),
                 user.getRole().getName(),
                 storeRepository.existsBySellerId(user.getId()),
+                user.isEmailVerified(),
                 user.getCreatedAt()
         );
     }

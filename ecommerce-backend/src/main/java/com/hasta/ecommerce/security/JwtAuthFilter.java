@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.ZoneId;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -34,17 +35,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        // Cek blacklist DULU sebelum validasi signature/expiry -
-        // token yang sudah di-logout langsung ditolak tanpa perlu proses parsing lebih jauh
         if (token != null && !tokenBlacklistService.isBlacklisted(token) && jwtTokenProvider.isValid(token)) {
             String email = jwtTokenProvider.getEmailFromToken(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            // Akun yang dinonaktifkan admin langsung kehilangan akses walau tokennya masih berlaku.
-            // Dibalas 401 supaya frontend (interceptor Part 12) otomatis mengeluarkan user.
+            // Akun yang dinonaktifkan admin langsung kehilangan akses walau tokennya masih berlaku
             if (!userDetails.isEnabled()) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
+            }
+
+            // Token yang diterbitkan sebelum password terakhir berubah ditolak. Perbandingan dalam
+            // detik karena waktu terbit di dalam token hanya sepresisi detik.
+            if (userDetails instanceof CustomUserDetails details && details.getPasswordChangedAt() != null) {
+                long issuedAt = jwtTokenProvider.parseClaims(token).getIssuedAt().toInstant().getEpochSecond();
+                long changedAt = details.getPasswordChangedAt().atZone(ZoneId.systemDefault()).toEpochSecond();
+
+                if (issuedAt < changedAt) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
             }
 
             UsernamePasswordAuthenticationToken authentication =
