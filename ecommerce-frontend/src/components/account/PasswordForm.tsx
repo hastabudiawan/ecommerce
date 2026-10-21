@@ -72,7 +72,7 @@ export function PasswordForm() {
       )}
       {done && (
         <p className="text-sm text-success">
-          Password berhasil diganti. Perangkat lain tetap login sampai sesinya habis.
+          Password berhasil diganti. Perangkat lain yang sedang login telah dikeluarkan.
         </p>
       )}
 

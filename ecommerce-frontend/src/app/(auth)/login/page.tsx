@@ -50,7 +50,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       // Bersihkan cache lama (misal: cart user sebelumnya)
       queryClient.clear();
-      
+
       setAuth(data.token, {
         userId: data.userId,
         name: data.name,
@@ -89,7 +89,14 @@ export default function LoginPage() {
           {...registerField("password")}
           error={errors.password?.message}
         />
-
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-black/60 underline"
+          >
+            Lupa password?
+          </Link>
+        </div>
         {mutation.isError && (
           <p className="text-sm text-sale">{getErrorMessage(mutation.error)}</p>
         )}

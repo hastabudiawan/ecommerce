@@ -12,14 +12,24 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { groupByStore } from "@/lib/cart";
 import { getErrorMessage } from "@/lib/errors";
-import { formatRupiah, withVariant } from "@/lib/utils"; // withVariant ditambahkan
+import { formatRupiah, withVariant } from "@/lib/utils";
 import { getAddresses } from "@/services/address.service";
 import { getCart } from "@/services/cart.service";
 import { checkout, previewCheckout } from "@/services/order.service";
 import type { Address, OrderGroup } from "@/types/api";
+import { getMe } from "@/services/account.service";
+import { useAuthStore } from "@/store/auth.store";
 
 function CheckoutContent() {
   const queryClient = useQueryClient();
+
+  const user = useAuthStore((s) => s.user);
+  const { data: account } = useQuery({
+    queryKey: ["me", user?.userId],
+    queryFn: getMe,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -94,6 +104,7 @@ function CheckoutContent() {
   );
 
   const blocked = cart.items.some((item) => !item.available || item.quantity > item.stock);
+  const unverified = account ? !account.emailVerified : false;
 
   // Alamat terpilih: pilihan user, kalau belum ada pakai alamat utama, kalau tidak ada pakai yang pertama
   const addressId =
@@ -171,7 +182,6 @@ function CheckoutContent() {
                       className="flex justify-between gap-4 py-3 text-sm"
                     >
                       <span>
-                        {/* withVariant digunakan di sini */}
                         {withVariant(item.productName, item.variantLabel)}{" "}
                         <span className="text-black/50">× {item.quantity}</span>
                       </span>
@@ -214,11 +224,18 @@ function CheckoutContent() {
 
         <Button
           onClick={handlePlaceOrder}
-          disabled={addressId === null || blocked || placeOrder.isPending}
+          disabled={addressId === null || blocked || unverified || placeOrder.isPending}
           className="mt-6 w-full"
         >
           {placeOrder.isPending ? "Memproses..." : "Buat Pesanan"}
         </Button>
+
+        {unverified && (
+          <p className="mt-3 text-sm text-sale">
+            Verifikasi email kamu dulu untuk checkout. Gunakan tautan &quot;Kirim ulang email
+            verifikasi&quot; di bagian atas halaman.
+          </p>
+        )}
 
         {blocked && (
           <p className="mt-3 text-sm text-sale">

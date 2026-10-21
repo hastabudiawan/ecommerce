@@ -49,6 +49,7 @@ export interface Account {
   phone: string | null;
   role: UserRole;
   hasStore: boolean;
+  emailVerified: boolean;
   createdAt: string;
 }
 
@@ -104,8 +105,8 @@ export interface Product {
   discountPercent: number;
   finalPrice: number;
   stock: number;
-  ratingAverage: number; // Tambahan baru
-  reviewCount: number; // Tambahan baru
+  ratingAverage: number;
+  reviewCount: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
   rejectionReason: string | null;
   variants: Variant[];
